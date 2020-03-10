@@ -1,0 +1,50 @@
+# parsing (gt) : mIoU:62.7/AP50:66.5/APvol:55.7/PCP50:68.1;
+# parsing (gt) : mIoU:62.8/AP50:67.4/APvol:56.1/PCP50:68.7; (h_flip)
+# parsing (det): mIoU:60.9/AP50:74.0/APvol:59.1/PCP50:71.5; bbox_AP: 72.1/93.0/78.9;  
+PIXEL_MEANS: [0.485, 0.456, 0.406]
+PIXEL_STDS: [0.229, 0.224, 0.225]
+CKPT: 'ckpts/instance/CIHP/backbone/aligned_resnet/A-R-50d-PFPN_384x288_adam_1x'
+DISPLAY_ITER: 20
+MODEL:
+  TYPE: 'generalized_cnn'
+  FPN_ON: True
+  PARSING_ON: True
+BACKBONE:
+  CONV_BODY: "resnet"
+  RESNET:
+    LAYERS: (3, 4, 6, 3)
+    STRIDE_3X3: True
+    USE_3x3x3HEAD: True
+    AVG_DOWN: True
+    USE_ALIGN: True
+FPN:
+  BODY: "pfpn"
+  USE_BN: True
+  PANOPTIC:
+    USE_BN: True
+PARSING:
+  NUM_PARSING: 20
+SOLVER:
+  MAX_EPOCHS: 140
+  BASE_LR: 0.001
+  OPTIMIZER: 'ADAM'
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 0.0001
+  WARM_UP_EPOCH: 0
+  WARM_UP_FACTOR: 0.1
+  LR_POLICY: 'STEP'
+  STEPS: [90, 120]
+TRAIN:
+  WEIGHTS: 'ckpts/cls/imagenet/resnet/aligned_resnet50d/weights_epoch120-79.60.pth'
+  DATASETS: ('CIHP_train',)
+  BATCH_SIZE: 128
+  SCALES: ([288, 384],)
+TEST:
+  WEIGHTS: ''
+  DATASETS: ('CIHP_val', )
+  IMS_PER_GPU: 1
+  SCALE: [288, 384]
+  FREQUENCY_EPOCHS: 10
+  INSTANCE_BBOX_FILE: ''
+  AUG:
+    H_FLIP: False

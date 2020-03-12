@@ -6,6 +6,29 @@ import torchvision
 from torchvision.transforms import functional as F
 
 
+class Compose(object):
+    def __init__(self, transforms):
+        self.transforms = transforms
+
+    def __call__(self, image, target):
+        for t in self.transforms:
+            image, target = t(image, target)
+        return image, target
+
+    def __repr__(self):
+        format_string = self.__class__.__name__ + "("
+        for t in self.transforms:
+            format_string += "\n"
+            format_string += "    {0}".format(t)
+        format_string += "\n)"
+        return format_string
+
+
+class ToTensor(object):
+    def __call__(self, image, target):
+        return F.to_tensor(image), target
+
+    
 class Box2CS(object):
     def __init__(self, aspect_ratio, pixel_std):
         self.aspect_ratio = aspect_ratio

@@ -2,7 +2,7 @@
 # UV_mAP: 61.4/91.4/73.2 (det)
 PIXEL_MEANS: [0.485, 0.456, 0.406]
 PIXEL_STDS: [0.229, 0.224, 0.225]
-CKPT: 'ckpts/instance/DensePose_COCO/R-50c-XDECONV_256x192_adam_1x'
+CKPT: 'ckpts/DensePose_COCO/R-50c-XDECONV_256x192_adam_1x'
 DISPLAY_ITER: 20
 MODEL:
   TYPE: 'generalized_cnn'

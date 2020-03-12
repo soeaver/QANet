@@ -1,9 +1,9 @@
 import os.path as osp
 
-from pet.utils.data.dataset_catalog import COMMON_DATASETS
+from utils.data.dataset_catalog import COMMON_DATASETS
 
 # Root directory of project
-ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..', '..'))
+ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..'))
 
 # Path to data dir
 _DATA_DIR = osp.abspath(osp.join(ROOT_DIR, 'data'))

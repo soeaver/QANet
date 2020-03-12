@@ -1,10 +1,10 @@
 import torch
 
-from pet.instance.modeling.mask_head import heads
-from pet.instance.modeling.mask_head import outputs
-from pet.instance.modeling.mask_head.loss import mask_loss
-from pet.instance.modeling import registry
-from pet.instance.core.config import cfg
+from instance.modeling.mask_head import heads
+from instance.modeling.mask_head import outputs
+from instance.modeling.mask_head.loss import mask_loss
+from instance.modeling import registry
+from instance.core.config import cfg
 
 
 class Mask(torch.nn.Module):

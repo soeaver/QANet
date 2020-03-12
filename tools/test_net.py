@@ -2,10 +2,10 @@ import os
 import argparse
 
 import _init_paths  # pylint: disable=unused-import
-from pet.utils.misc import mkdir_p
+from utils.misc import mkdir_p
 
-from pet.instance.core.config import cfg, merge_cfg_from_file, merge_cfg_from_list
-from pet.instance.core.test_engine import run_inference
+from instance.core.config import cfg, merge_cfg_from_file, merge_cfg_from_list
+from instance.core.test_engine import run_inference
 
 # Parse arguments
 parser = argparse.ArgumentParser(description='Pet Model Evaluating')

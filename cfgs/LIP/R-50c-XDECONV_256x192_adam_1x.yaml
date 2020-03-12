@@ -2,7 +2,7 @@
 # parsing (gt hflip) : mIoU:47.5/PixAcc:85.7;
 PIXEL_MEANS: [0.485, 0.456, 0.406]
 PIXEL_STDS: [0.229, 0.224, 0.225]
-CKPT: 'ckpts/instance/LIP/R-50c-XDECONV_256x192_adam_1x'
+CKPT: 'ckpts/LIP/R-50c-XDECONV_256x192_adam_1x'
 DISPLAY_ITER: 20
 MODEL:
   TYPE: 'generalized_cnn'

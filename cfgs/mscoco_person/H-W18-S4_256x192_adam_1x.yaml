@@ -1,0 +1,45 @@
+# kp_AP: 74.7/92.5/82.2/72.0/79.2
+# kp_AP: 76.2/92.6/83.6/73.6/80.3 (flip)
+PIXEL_MEANS: [0.485, 0.456, 0.406]
+PIXEL_STDS: [0.229, 0.224, 0.225]
+TO_RGB: True
+CKPT: 'ckpts/mscoco_person/H-W18-S4_256x192_adam_1x'
+DISPLAY_ITER: 20
+MODEL:
+  TYPE: 'generalized_cnn'
+  KEYPOINT_ON: True
+BACKBONE:
+  CONV_BODY: "hrnet_s4"
+  HRNET:
+    WIDTH: 18
+SOLVER:
+  MAX_EPOCHS: 140
+  BASE_LR: 0.002
+  OPTIMIZER: 'ADAM'
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 0.0001
+  WARM_UP_EPOCH: 0
+  WARM_UP_FACTOR: 0.1
+  LR_POLICY: 'STEP'
+  STEPS: [90, 120]
+KEYPOINT:
+  NUM_JOINTS: 17
+  HEATMAP_SIZE: (48, 64)
+TRAIN:
+  WEIGHTS: 'ckpts/cls/imagenet/3rdparty/hrnet_w18_official/hrnetv2_w18_imagenet_pretrained.pth'
+  DATASETS: ('keypoints_coco_2017_train', )
+  BATCH_SIZE: 256
+  SCALES: ([192, 256],)
+  SCALE_FACTOR: 0.35
+  ROT_FACTOR: 45
+TEST:
+  WEIGHTS: ''
+  DATASETS: ('keypoints_coco_2017_val', )
+  IMS_PER_GPU: 32
+  SCALE: [192, 256]
+  FREQUENCY_EPOCHS: 10
+  INSTANCE_BBOX_FILE: ''
+  AUG:
+    H_FLIP: False
+    POST_PROCESS: True
+    SHIFT_HEATMAP: True

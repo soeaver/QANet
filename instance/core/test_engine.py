@@ -6,20 +6,20 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 
-from pet.utils.measure import measure_model
-from pet.utils.misc import mkdir_p, logging_rank, save_object
-from pet.utils.checkpointer import get_weights, load_weights
-from pet.utils.net import convert_bn2affine_model
-from pet.utils.logger import TestingLogger
-from pet.utils.timer import Timer
-import pet.utils.subprocess as subprocess_utils
-import pet.utils.vis as vis_utils
+from utils.measure import measure_model
+from utils.misc import mkdir_p, logging_rank, save_object
+from utils.checkpointer import get_weights, load_weights
+from utils.net import convert_bn2affine_model
+from utils.logger import TestingLogger
+from utils.timer import Timer
+import utils.subprocess as subprocess_utils
+import utils.vis as vis_utils
 
-from pet.instance.core.config import cfg, merge_cfg_from_file, merge_cfg_from_list
-from pet.instance.modeling.model_builder import Generalized_CNN
-from pet.instance.datasets import build_dataset, make_test_data_loader, evaluation
-from pet.instance.core.test import conv_body_inference, mask_inference, keypoint_inference
-from pet.instance.core.test import parsing_inference, uv_inference, post_processing
+from instance.core.config import cfg, merge_cfg_from_file, merge_cfg_from_list
+from instance.modeling.model_builder import Generalized_CNN
+from instance.datasets import build_dataset, make_test_data_loader, evaluation
+from instance.core.test import conv_body_inference, mask_inference, keypoint_inference
+from instance.core.test import parsing_inference, uv_inference, post_processing
 
 
 def run_inference(args, ind_range=None, multi_gpu_testing=False):
@@ -197,7 +197,7 @@ def test(model, val_set, start_ind, end_ind, logger):
                     ims_uvs = [uvs[k]] if cfg.MODEL.UV_ON else None
                     vis_im = vis_utils.vis_one_image_opencv(
                         im,
-                        cfg,
+                        cfg.VIS,
                         boxes[k:k+1],
                         [classes[k]],
                         masks=ims_masks,

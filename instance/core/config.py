@@ -5,7 +5,7 @@ import yaml
 import numpy as np
 from ast import literal_eval
 
-from pet.utils.collections import AttrDict
+from utils.collections import AttrDict
 
 __C = AttrDict()
 cfg = __C
@@ -298,69 +298,6 @@ __C.BACKBONE.CONV_BODY = 'resnet'
 __C.BACKBONE.BN_EPS = 1e-5
 
 # ---------------------------------------------------------------------------- #
-# CBNet options
-# ---------------------------------------------------------------------------- #
-__C.BACKBONE.CBNET = AttrDict()
-
-# Number of backbone used for CBNet
-# 2 as Dual-Backbone, 3 as Triple-Backbone
-__C.BACKBONE.CBNET.NUM_BK = 2
-
-# Use batch normalization in composition module
-__C.BACKBONE.CBNET.USE_BN = False
-
-# Use group normalization in composition module
-__C.BACKBONE.CBNET.USE_GN = False
-
-# ---------------------------------------------------------------------------- #
-# CrossNet options
-# ---------------------------------------------------------------------------- #
-__C.BACKBONE.CX = AttrDict()
-
-# The number of layers in each block
-__C.BACKBONE.CX.LAYERS = (3, 7, 3)
-
-# Network initial width
-__C.BACKBONE.CX.WIDTH = 70
-
-# Expansion coefficient of each block
-__C.BACKBONE.CX.EXPANSION = 0.4
-
-# Kernel size of depth-wise separable convolution layers
-__C.BACKBONE.CX.KERNEL = 5
-
-# Groups of the last 1x1 convolution layer in each block
-__C.BACKBONE.CX.GROUPS = 2
-
-# Depth of CrossPod
-__C.BACKBONE.CX.DEPTH = 3
-
-# Use a squeeze-and-excitation module in each block
-__C.BACKBONE.CX.USE_SE = False
-
-# ---------------------------------------------------------------------------- #
-# EfficientNet options
-# ---------------------------------------------------------------------------- #
-__C.BACKBONE.EFFI = AttrDict()
-
-# Network setting of EfficientNet
-__C.BACKBONE.EFFI.SETTING = 'b0'
-
-# Use Conv2dSamePadding to replace Conv2d for fitting tf-original implementation
-__C.BACKBONE.EFFI.SAME_PAD = True
-
-# ---------------------------------------------------------------------------- #
-# FBNet options
-# ---------------------------------------------------------------------------- #
-__C.BACKBONE.FB = AttrDict()
-
-# Network setting of FBNet
-__C.BACKBONE.FB.SETTING = 'C'
-
-# Network widen factor
-__C.BACKBONE.FB.WIDEN_FACTOR = 1.0
-
-# ---------------------------------------------------------------------------- #
 # HRNet options
 # ---------------------------------------------------------------------------- #
 __C.BACKBONE.HRNET = AttrDict()
@@ -386,17 +323,6 @@ __C.BACKBONE.HRNET.USE_ALIGN = False
 # Type of 3x3 convolution layer in each block
 # 'deform' for dcnv1, 'deformv2' for dcnv2
 __C.BACKBONE.HRNET.STAGE_WITH_CONV = ('normal', 'normal', 'normal', 'normal')
-
-# ---------------------------------------------------------------------------- #
-# MNasNet options
-# ---------------------------------------------------------------------------- #
-__C.BACKBONE.MNAS = AttrDict()
-
-# Network setting of MNasNet
-__C.BACKBONE.MNAS.SETTING = 'A'
-
-# Network widen factor
-__C.BACKBONE.MNAS.WIDEN_FACTOR = 1.0
 
 # ---------------------------------------------------------------------------- #
 # MobileNet V1 options
@@ -460,43 +386,6 @@ __C.BACKBONE.MV3.SYNC_SE_ACT = True
 
 # Use Conv2dSamePadding to replace Conv2d for fitting tf-original implementation
 __C.BACKBONE.MV3.SAME_PAD = False
-
-# ---------------------------------------------------------------------------- #
-# PeleeNet options
-# ---------------------------------------------------------------------------- #
-__C.BACKBONE.PELEE = AttrDict()
-
-# Channel growth rate
-# 24 for peleenet_lite
-__C.BACKBONE.PELEE.GROWTH_RATE = 32
-
-# Network initial width
-# 24 for peleenet_lite
-__C.BACKBONE.PELEE.NUM_INIT = 32
-
-# The number of layers in each block
-# (2, 2, 4, 3) for peleenet_lite
-__C.BACKBONE.PELEE.LAYERS = (3, 4, 8, 6)
-
-# The initial width of each block
-__C.BACKBONE.PELEE.BOTTLENECK_WIDTH = [1, 2, 4, 4]
-
-# Use a squeeze-and-excitation module in each block
-__C.BACKBONE.PELEE.USE_SE = False   # TODO
-
-# ---------------------------------------------------------------------------- #
-# ProxylessNas options
-# ---------------------------------------------------------------------------- #
-__C.BACKBONE.PROXY = AttrDict()
-
-# Network setting of ProxylessNas
-__C.BACKBONE.PROXY.SETTING = 'mobile'
-
-# Network widen factor
-__C.BACKBONE.PROXY.WIDEN_FACTOR = 1.0
-
-# Use a squeeze-and-excitation module in each block
-__C.BACKBONE.PROXY.USE_SE = False
 
 # ---------------------------------------------------------------------------- #
 # ResNet options
@@ -590,17 +479,6 @@ __C.BACKBONE.RESNEXT.CTX_RATIO = 0.0625
 # Type of 3x3 convolution layer in each block
 # 'deform' for dcnv1, 'deformv2' for dcnv2
 __C.BACKBONE.RESNEXT.STAGE_WITH_CONV = ('normal', 'normal', 'normal', 'normal')
-
-# ---------------------------------------------------------------------------- #
-# VggNet options    # TODO
-# ---------------------------------------------------------------------------- #
-__C.BACKBONE.VGG = AttrDict()
-
-# Use batch normalization
-__C.BACKBONE.VGG.USE_BN = False
-
-# Use group normalization
-__C.BACKBONE.VGG.USE_GN = False
 
 
 # ---------------------------------------------------------------------------- #

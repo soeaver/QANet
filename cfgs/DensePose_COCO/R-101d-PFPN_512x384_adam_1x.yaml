@@ -1,0 +1,51 @@
+# uv_AP (gt):  70.3/95.5/83.7/66.5/71.2;
+# uv_AP (det): 67.9/92.8/80.2/63.5/69.0; bbox_AP: 64.0/89.4/70.1/34.1/60.2/78.7;
+PIXEL_MEANS: [0.485, 0.456, 0.406]
+PIXEL_STDS: [0.229, 0.224, 0.225]
+CKPT: 'ckpts/DensePose_COCO/R-101d-PFPN_512x384_adam_1x'
+DISPLAY_ITER: 20
+MODEL:
+  TYPE: 'generalized_cnn'
+  FPN_ON: True
+  UV_ON: True
+BACKBONE:
+  CONV_BODY: "resnet"
+  RESNET:
+    LAYERS: (3, 4, 23, 3)
+    STRIDE_3X3: True
+    USE_3x3x3HEAD: True
+    AVG_DOWN: True
+FPN:
+  BODY: "pfpn"
+  USE_BN: True
+  PANOPTIC:
+    USE_BN: True
+UV:
+  INDEX_WEIGHTS: 5.0
+  PART_WEIGHTS: 1.0
+  POINT_REGRESSION_WEIGHTS: 0.01
+  INDEX_THRESH: 0.95
+SOLVER:
+  MAX_EPOCHS: 140
+  BASE_LR: 0.001
+  OPTIMIZER: 'ADAM'
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 0.0001
+  WARM_UP_EPOCH: 0
+  WARM_UP_FACTOR: 0.1
+  LR_POLICY: 'STEP'
+  STEPS: [90, 120]
+TRAIN:
+  WEIGHTS: 'ckpts/cls/imagenet/resnet/resnet101d/weights_epoch120-80.14.pth'
+  DATASETS: ('dense_coco_2017_train', )
+  BATCH_SIZE: 128
+  SCALES: ([384, 512],)
+TEST:
+  WEIGHTS: ''
+  DATASETS: ('dense_coco_2017_val', )
+  IMS_PER_GPU: 1
+  SCALE: [384, 512]
+  FREQUENCY_EPOCHS: 10
+  INSTANCE_BBOX_FILE: ''
+  AUG:
+    H_FLIP: False

@@ -5,9 +5,9 @@ from collections import OrderedDict
 import torch
 import torch.nn.init as init
 
-import pet.models.ops as ops
-from pet.utils.misc import logging_rank
-from pet.utils.net import mismatch_params_filter
+import models.ops as ops
+from utils.misc import logging_rank
+from utils.net import mismatch_params_filter
 
 
 def get_weights(ckpt_path, cfg_test_weights, mode='latest'):

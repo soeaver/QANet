@@ -2,8 +2,8 @@ import math
 
 import numpy as np
 
-from pet.instance.core.config import cfg
-from pet.instance.utils.transforms import transform_preds
+from instance.core.config import cfg
+from instance.utils.transforms import transform_preds
 
 
 def get_keypoints():

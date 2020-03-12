@@ -1,0 +1,50 @@
+# kp_AP: 72.0/91.5/79.4/68.8/76.8
+# kp_AP: 72.8/91.6/80.5/70.0/77.4 (flip)
+PIXEL_MEANS: [0.485, 0.456, 0.406]
+PIXEL_STDS: [0.229, 0.224, 0.225]
+CKPT: 'ckpts/mscoco_person/R-50c-PFPN_256x192_adam_1x'
+DISPLAY_ITER: 20
+MODEL:
+  TYPE: 'generalized_cnn'
+  FPN_ON: True
+  KEYPOINT_ON: True
+BACKBONE:
+  CONV_BODY: "resnet"
+  RESNET:
+    LAYERS: (3, 4, 6, 3)
+    STRIDE_3X3: True
+    USE_3x3x3HEAD: True
+FPN:
+  BODY: "pfpn"
+  USE_BN: True
+  PANOPTIC:
+    USE_BN: True
+SOLVER:
+  MAX_EPOCHS: 140
+  BASE_LR: 0.002
+  OPTIMIZER: 'ADAM'
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 0.0001
+  WARM_UP_EPOCH: 0
+  WARM_UP_FACTOR: 0.1
+  LR_POLICY: 'STEP'
+  STEPS: [90, 120]
+KEYPOINT:
+  NUM_JOINTS: 17
+  HEATMAP_SIZE: (48, 64)
+TRAIN:
+  WEIGHTS: 'weights/pytorch-model/resnet50_1x64d/resnet50_1x64d-77.50.pth'
+  DATASETS: ('keypoints_coco_2017_train', )
+  BATCH_SIZE: 256
+  SCALES: ([192, 256],)
+TEST:
+  WEIGHTS: ''
+  DATASETS: ('keypoints_coco_2017_val', )
+  IMS_PER_GPU: 32
+  SCALE: [192, 256]
+  FREQUENCY_EPOCHS: 10
+  INSTANCE_BBOX_FILE: ''
+  AUG:
+    H_FLIP: False
+    POST_PROCESS: True
+    SHIFT_HEATMAP: True

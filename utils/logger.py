@@ -4,9 +4,9 @@ from collections import defaultdict, OrderedDict, deque
 
 import torch
 
-from pet.utils.timer import Timer
-from pet.utils.misc import logging_rank
-from pet.utils.net import reduce_tensor
+from utils.timer import Timer
+from utils.misc import logging_rank
+from utils.net import reduce_tensor
 
 
 class TrainingLogger(object):

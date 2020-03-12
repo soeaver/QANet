@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from pet.utils.misc import logging_rank
+from utils.misc import logging_rank
 
 
 class Optimizer(object):

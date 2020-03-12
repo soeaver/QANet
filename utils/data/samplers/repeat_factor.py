@@ -3,7 +3,7 @@ import torch
 import torch.distributed as dist
 from torch.utils.data.sampler import Sampler
 from collections import defaultdict
-from pet.utils.misc import logging_rank
+from utils.misc import logging_rank
 
 
 class RepeatFactorTrainingSampler(Sampler):

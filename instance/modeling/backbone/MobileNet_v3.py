@@ -3,11 +3,11 @@ import math
 import torch.nn as nn
 import torch.nn.functional as F
 
-import pet.models.imagenet.mobilenet_v3 as mv3
-from pet.models.imagenet.utils import make_divisible, convert_conv2convsamepadding_model
-from pet.utils.net import make_norm
-from pet.instance.modeling import registry
-from pet.instance.core.config import cfg
+import models.imagenet.mobilenet_v3 as mv3
+from models.imagenet.utils import make_divisible, convert_conv2convsamepadding_model
+from utils.net import make_norm
+from instance.modeling import registry
+from instance.core.config import cfg
 
 
 class MobileNetV3(mv3.MobileNetV3):

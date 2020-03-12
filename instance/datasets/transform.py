@@ -1,6 +1,6 @@
-from pet.utils.data import transforms as T
+from utils.data import transforms as T
 
-from pet.instance.core.config import cfg
+from instance.core.config import cfg
 
 
 def build_transforms(is_train=True):

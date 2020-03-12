@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-from pet.instance.utils.transforms import get_affine_transform, affine_transform
-from pet.instance.core.config import cfg
+from instance.utils.transforms import get_affine_transform, affine_transform
+from instance.core.config import cfg
 
 
 def parsing_results(parsing, image_info, center, scale):

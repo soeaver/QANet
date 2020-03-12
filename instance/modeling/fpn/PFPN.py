@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 
-from pet.utils.net import make_conv
-from pet.instance.modeling.fpn import fpn, nasfpn
-from pet.instance.core.config import cfg
-from pet.instance.modeling import registry
+from utils.net import make_conv
+from instance.modeling.fpn import fpn, nasfpn
+from instance.core.config import cfg
+from instance.modeling import registry
 
 
 @registry.FPN_BODY.register("pfpn")

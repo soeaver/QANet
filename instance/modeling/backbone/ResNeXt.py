@@ -2,10 +2,10 @@ import math
 
 import torch.nn as nn
 
-import pet.models.imagenet.resnext as resx
-from pet.utils.net import make_norm
-from pet.instance.modeling import registry
-from pet.instance.core.config import cfg
+import models.imagenet.resnext as resx
+from utils.net import make_norm
+from instance.modeling import registry
+from instance.core.config import cfg
 
 
 def get_norm():

@@ -6,7 +6,7 @@ import pycocotools.mask as mask_utils
 
 import torch
 
-import pet.utils.data.evaluation.densepose_methods as dp_utils
+import utils.data.evaluation.densepose_methods as dp_utils
 
 DP = dp_utils.DensePoseMethods()
 

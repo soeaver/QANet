@@ -1,7 +1,7 @@
 from torch import nn
 
-from pet.instance.modeling import registry
-from pet.instance.core.config import cfg
+from instance.modeling import registry
+from instance.core.config import cfg
 
 
 @registry.PARSINGIOU_OUTPUTS.register("linear_output")

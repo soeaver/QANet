@@ -1,7 +1,7 @@
 import torch
 
-from pet.models.ops import l2_loss
-from pet.instance.core.config import cfg
+from models.ops import l2_loss
+from instance.core.config import cfg
 
 
 class ParsingIoULossComputation(object):

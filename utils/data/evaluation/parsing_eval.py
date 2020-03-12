@@ -12,7 +12,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-from pet.utils.misc import logging_rank
+from utils.misc import logging_rank
 
 
 def parsing_png(parsing, scores, semseg_thresh, img_info, output_folder, semseg=None):

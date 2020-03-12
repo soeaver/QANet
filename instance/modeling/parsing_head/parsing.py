@@ -1,12 +1,12 @@
 import torch
 import torch.nn.functional as F
 
-from pet.instance.modeling.parsing_head import heads
-from pet.instance.modeling.parsing_head import outputs
-from pet.instance.modeling.parsing_head.loss import parsing_loss_evaluator
-from pet.instance.modeling.parsing_head.parsingiou.parsingiou import ParsingIoU
-from pet.instance.modeling import registry
-from pet.instance.core.config import cfg
+from instance.modeling.parsing_head import heads
+from instance.modeling.parsing_head import outputs
+from instance.modeling.parsing_head.loss import parsing_loss_evaluator
+from instance.modeling.parsing_head.parsingiou.parsingiou import ParsingIoU
+from instance.modeling import registry
+from instance.core.config import cfg
 
 
 class Parsing(torch.nn.Module):

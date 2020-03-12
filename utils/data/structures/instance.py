@@ -5,7 +5,7 @@ import numpy as np
 
 import pycocotools.mask as mask_utils
 
-import pet.utils.data.evaluation.densepose_methods as dp_utils
+import utils.data.evaluation.densepose_methods as dp_utils
 
 
 # transpose

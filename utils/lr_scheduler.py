@@ -3,7 +3,7 @@ from bisect import bisect_right
 
 from torch.optim.optimizer import Optimizer
 
-from pet.utils.misc import logging_rank
+from utils.misc import logging_rank
 
 
 def _get_lr_change_ratio(cur_lr, new_lr):

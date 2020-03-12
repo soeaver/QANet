@@ -2,7 +2,7 @@ import cv2
 import copy
 import torch
 import numpy as np
-from pet.models.ops.misc import interpolate
+from models.ops.misc import interpolate
 
 import pycocotools.mask as mask_utils
 

@@ -6,7 +6,7 @@ from io import IOBase
 from six.moves import shlex_quote
 from six.moves import cPickle as pickle
 
-from pet.utils.misc import logging_rank
+from utils.misc import logging_rank
 
 
 def process_in_parallel(tag, total_range_size, binary, cfg, ckpt_path):

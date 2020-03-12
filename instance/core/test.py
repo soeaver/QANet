@@ -3,13 +3,13 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from pet.instance.core.config import cfg
-from pet.instance.modeling.mask_head.inference import masks_results
-from pet.instance.modeling.keypoint_head.inference import get_final_preds
-from pet.instance.modeling.parsing_head.inference import parsing_results
-from pet.instance.modeling.uv_head.inference import uvs_results
-from pet.instance.utils.transforms import flip_back, xywh_to_xyxy
-from pet.utils.data.structures.densepose_uv import flip_uv_featuremap
+from instance.core.config import cfg
+from instance.modeling.mask_head.inference import masks_results
+from instance.modeling.keypoint_head.inference import get_final_preds
+from instance.modeling.parsing_head.inference import parsing_results
+from instance.modeling.uv_head.inference import uvs_results
+from instance.utils.transforms import flip_back, xywh_to_xyxy
+from utils.data.structures.densepose_uv import flip_uv_featuremap
 
 
 def conv_body_inference(model, inputs):

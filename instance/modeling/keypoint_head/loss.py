@@ -1,7 +1,7 @@
 import torch
 
-from pet.instance.ops import JointsMSELoss
-from pet.instance.core.config import cfg
+from instance.ops import JointsMSELoss
+from instance.core.config import cfg
 
 
 def keypoint_loss(outputs, targets, target_weight=None):

@@ -4,7 +4,7 @@ import copy
 import torch
 import numpy as np
 
-from pet.models.ops.misc import interpolate
+from models.ops.misc import interpolate
 
 # transpose
 FLIP_LEFT_RIGHT = 0

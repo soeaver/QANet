@@ -10,12 +10,12 @@ from collections import OrderedDict
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
-from pet.utils.misc import logging_rank
-from pet.utils.data.evaluation.densepose_cocoeval import denseposeCOCOeval
-from pet.utils.data.evaluation.parsing_eval import parsing_png, evaluate_parsing
-from pet.instance.core.config import cfg
-from pet.instance.datasets import dataset_catalog
-from pet.instance.utils.misc import oks_nms
+from utils.misc import logging_rank
+from utils.data.evaluation.densepose_cocoeval import denseposeCOCOeval
+from utils.data.evaluation.parsing_eval import parsing_png, evaluate_parsing
+from instance.core.config import cfg
+from instance.datasets import dataset_catalog
+from instance.utils.misc import oks_nms
 
 
 def evaluation(dataset, all_info, all_masks, all_keyps, all_parss, all_uvs, clean_up=True):

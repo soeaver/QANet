@@ -1,14 +1,14 @@
 import torch
 import torch.nn as nn
 
-import pet.instance.modeling.backbone
-import pet.instance.modeling.fpn
-from pet.instance.modeling.mask_head.mask import Mask
-from pet.instance.modeling.keypoint_head.keypoint import Keypoint
-from pet.instance.modeling.parsing_head.parsing import Parsing
-from pet.instance.modeling.uv_head.uv import UV
-from pet.instance.core.config import cfg
-from pet.instance.modeling import registry
+import instance.modeling.backbone
+import instance.modeling.fpn
+from instance.modeling.mask_head.mask import Mask
+from instance.modeling.keypoint_head.keypoint import Keypoint
+from instance.modeling.parsing_head.parsing import Parsing
+from instance.modeling.uv_head.uv import UV
+from instance.core.config import cfg
+from instance.modeling import registry
 
 
 class Generalized_CNN(nn.Module):

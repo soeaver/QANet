@@ -2,7 +2,7 @@
 # parsing (gt hflip) : mIoU:64.1/PixAcc:93.6/AP50:63.1/APvol:53.6/PCP50:55.5 (sqrt(pixel_score * bbox_score), 0.2);
 PIXEL_MEANS: [0.485, 0.456, 0.406]
 PIXEL_STDS: [0.229, 0.224, 0.225]
-CKPT: 'ckpts/instance/PASCAL-Person-Part/R-50c-XDECONV_256x192_adam_1x'
+CKPT: 'ckpts/PASCAL-Person-Part/R-50c-XDECONV_256x192_adam_1x'
 DISPLAY_ITER: 5
 MODEL:
   TYPE: 'generalized_cnn'

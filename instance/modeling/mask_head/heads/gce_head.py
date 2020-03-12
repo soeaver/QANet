@@ -2,10 +2,10 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from pet.models.ops import NonLocal2d
-from pet.instance.modeling import registry
-from pet.instance.core.config import cfg
-from pet.utils.net import make_conv
+from models.ops import NonLocal2d
+from instance.modeling import registry
+from instance.core.config import cfg
+from utils.net import make_conv
 
 
 @registry.MASK_HEADS.register("gce_head")

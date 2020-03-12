@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from pet.instance.modeling import registry
-from pet.instance.core.config import cfg
+from instance.modeling import registry
+from instance.core.config import cfg
 
 
 @registry.KEYPOINT_OUTPUTS.register("conv1x1_outputs")

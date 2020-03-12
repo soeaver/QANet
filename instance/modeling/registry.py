@@ -1,4 +1,4 @@
-from pet.utils.registry import Registry
+from utils.registry import Registry
 
 
 """

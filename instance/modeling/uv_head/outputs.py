@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from pet.models.ops import ConvTranspose2d
-from pet.instance.modeling import registry
-from pet.instance.core.config import cfg
+from models.ops import ConvTranspose2d
+from instance.modeling import registry
+from instance.core.config import cfg
 
 
 @registry.UV_OUTPUTS.register("UV_outputs")

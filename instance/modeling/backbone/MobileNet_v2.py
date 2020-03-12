@@ -2,11 +2,11 @@ import math
 
 import torch.nn as nn
 
-import pet.models.imagenet.mobilenet_v2 as mv2
-from pet.models.imagenet.utils import make_divisible
-from pet.utils.net import make_norm
-from pet.instance.modeling import registry
-from pet.instance.core.config import cfg
+import models.imagenet.mobilenet_v2 as mv2
+from models.imagenet.utils import make_divisible
+from utils.net import make_norm
+from instance.modeling import registry
+from instance.core.config import cfg
 
 
 class MobileNetV2(mv2.MobileNetV2):

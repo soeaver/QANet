@@ -5,9 +5,8 @@ import pycocotools.mask as mask_util
 from collections import defaultdict
 import matplotlib.pyplot as plt
 
-from pet.utils.timer import Timer
-import pet.utils.colormap as colormap_utils
-from pet.rcnn.core.config import cfg
+from utils.timer import Timer
+import utils.colormap as colormap_utils
 
 _GRAY = [218, 227, 218]
 _GREEN = [18, 127, 15]
@@ -77,20 +76,20 @@ def get_class_string(class_index, score, dataset):
     return class_text + ' {:0.2f}'.format(score).lstrip('0')
 
 
-def vis_bbox(img, bbox, bbox_color):
+def vis_bbox(vis_cfg, img, bbox, bbox_color):
     """Visualizes a bounding box."""
     (x0, y0, w, h) = bbox
     x1, y1 = int(x0 + w), int(y0 + h)
     x0, y0 = int(x0), int(y0)
-    cv2.rectangle(img, (x0, y0), (x1, y1), bbox_color, thickness=cfg.VIS.SHOW_BOX.BORDER_THICK)
+    cv2.rectangle(img, (x0, y0), (x1, y1), bbox_color, thickness=vis_cfg.SHOW_BOX.BORDER_THICK)
 
     return img
 
 
-def vis_class(img, pos, class_str, bg_color):
+def vis_class(vis_cfg, img, pos, class_str, bg_color):
     """Visualizes the class."""
-    font_color = cfg.VIS.SHOW_CLASS.COLOR
-    font_scale = cfg.VIS.SHOW_CLASS.FONT_SCALE
+    font_color = vis_cfg.SHOW_CLASS.COLOR
+    font_scale = vis_cfg.SHOW_CLASS.FONT_SCALE
 
     x0, y0 = int(pos[0]), int(pos[1])
     # Compute text size.
@@ -108,20 +107,20 @@ def vis_class(img, pos, class_str, bg_color):
     return img
 
 
-def vis_mask(img, mask, bbox_color, show_parss=False):
+def vis_mask(vis_cfg, img, mask, bbox_color, show_parss=False):
     """Visualizes a single binary mask."""
     img = img.astype(np.float32)
     idx = np.nonzero(mask)
 
-    border_color = cfg.VIS.SHOW_MASK.BORDER_COLOR
-    border_thick = cfg.VIS.SHOW_MASK.BORDER_THICK
+    border_color = vis_cfg.SHOW_MASK.BORDER_COLOR
+    border_thick = vis_cfg.SHOW_MASK.BORDER_THICK
 
-    mask_color = bbox_color if cfg.VIS.SHOW_MASK.MASK_COLOR_FOLLOW_BOX else _WHITE
+    mask_color = bbox_color if vis_cfg.SHOW_MASK.MASK_COLOR_FOLLOW_BOX else _WHITE
     mask_color = np.asarray(mask_color)
-    mask_alpha = cfg.VIS.SHOW_MASK.MASK_ALPHA
+    mask_alpha = vis_cfg.SHOW_MASK.MASK_ALPHA
 
     _, contours, _ = cv2.findContours(mask.copy(), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
-    if cfg.VIS.SHOW_MASK.SHOW_BORDER:
+    if vis_cfg.SHOW_MASK.SHOW_BORDER:
         cv2.drawContours(img, contours, -1, border_color, border_thick, cv2.LINE_AA)
 
     if not show_parss:
@@ -131,7 +130,7 @@ def vis_mask(img, mask, bbox_color, show_parss=False):
     return img.astype(np.uint8)
 
 
-def vis_keypoints(img, kps, show_parss=False):
+def vis_keypoints(vis_cfg, img, kps, show_parss=False):
     """Visualizes keypoints (adapted from vis_one_image).
     kps has shape (4, #keypoints) where 4 rows are (x, y, logit, prob).
     """
@@ -142,7 +141,7 @@ def vis_keypoints(img, kps, show_parss=False):
     cmap = plt.get_cmap('rainbow')
     colors = [cmap(i) for i in np.linspace(0, 1, len(kp_lines) + 2)]
     if show_parss:
-        colors = [cfg.VIS.SHOW_KPS.KPS_COLOR_WITH_PARSING for c in colors]
+        colors = [vis_cfg.SHOW_KPS.KPS_COLOR_WITH_PARSING for c in colors]
     else:
         colors = [(c[2] * 255, c[1] * 255, c[0] * 255) for c in colors]
 
@@ -161,12 +160,12 @@ def vis_keypoints(img, kps, show_parss=False):
         kps[2, dataset_keypoints.index('right_hip')],
         kps[2, dataset_keypoints.index('left_hip')])
     nose_idx = dataset_keypoints.index('nose')
-    if sc_mid_shoulder > cfg.VIS.SHOW_KPS.KPS_TH and kps[2, nose_idx] > cfg.VIS.SHOW_KPS.KPS_TH:
+    if sc_mid_shoulder > vis_cfg.SHOW_KPS.KPS_TH and kps[2, nose_idx] > vis_cfg.SHOW_KPS.KPS_TH:
         cv2.line(kp_mask, tuple(mid_shoulder), tuple(kps[:2, nose_idx]), color=colors[len(kp_lines)],
-                 thickness=cfg.VIS.SHOW_KPS.LINK_THICK, lineType=cv2.LINE_AA)
-    if sc_mid_shoulder > cfg.VIS.SHOW_KPS.KPS_TH and sc_mid_hip > cfg.VIS.SHOW_KPS.KPS_TH:
+                 thickness=vis_cfg.SHOW_KPS.LINK_THICK, lineType=cv2.LINE_AA)
+    if sc_mid_shoulder > vis_cfg.SHOW_KPS.KPS_TH and sc_mid_hip > vis_cfg.SHOW_KPS.KPS_TH:
         cv2.line(kp_mask, tuple(mid_shoulder), tuple(mid_hip), color=colors[len(kp_lines) + 1],
-                 thickness=cfg.VIS.SHOW_KPS.LINK_THICK, lineType=cv2.LINE_AA)
+                 thickness=vis_cfg.SHOW_KPS.LINK_THICK, lineType=cv2.LINE_AA)
 
     # Draw the keypoints.
     for l in range(len(kp_lines)):
@@ -174,44 +173,44 @@ def vis_keypoints(img, kps, show_parss=False):
         i2 = kp_lines[l][1]
         p1 = kps[0, i1], kps[1, i1]
         p2 = kps[0, i2], kps[1, i2]
-        if kps[2, i1] > cfg.VIS.SHOW_KPS.KPS_TH and kps[2, i2] > cfg.VIS.SHOW_KPS.KPS_TH:
+        if kps[2, i1] > vis_cfg.SHOW_KPS.KPS_TH and kps[2, i2] > vis_cfg.SHOW_KPS.KPS_TH:
             cv2.line(kp_mask, p1, p2, color=colors[l],
-                     thickness=cfg.VIS.SHOW_KPS.LINK_THICK, lineType=cv2.LINE_AA)
-        if kps[2, i1] > cfg.VIS.SHOW_KPS.KPS_TH:
-            cv2.circle(kp_mask, p1, radius=cfg.VIS.SHOW_KPS.CIRCLE_RADIUS, color=colors[l],
-                       thickness=cfg.VIS.SHOW_KPS.CIRCLE_THICK, lineType=cv2.LINE_AA)
-        if kps[2, i2] > cfg.VIS.SHOW_KPS.KPS_TH:
-            cv2.circle(kp_mask, p2, radius=cfg.VIS.SHOW_KPS.CIRCLE_RADIUS, color=colors[l],
-                       thickness=cfg.VIS.SHOW_KPS.CIRCLE_THICK, lineType=cv2.LINE_AA)
+                     thickness=vis_cfg.SHOW_KPS.LINK_THICK, lineType=cv2.LINE_AA)
+        if kps[2, i1] > vis_cfg.SHOW_KPS.KPS_TH:
+            cv2.circle(kp_mask, p1, radius=vis_cfg.SHOW_KPS.CIRCLE_RADIUS, color=colors[l],
+                       thickness=vis_cfg.SHOW_KPS.CIRCLE_THICK, lineType=cv2.LINE_AA)
+        if kps[2, i2] > vis_cfg.SHOW_KPS.KPS_TH:
+            cv2.circle(kp_mask, p2, radius=vis_cfg.SHOW_KPS.CIRCLE_RADIUS, color=colors[l],
+                       thickness=vis_cfg.SHOW_KPS.CIRCLE_THICK, lineType=cv2.LINE_AA)
 
     # Blend the keypoints.
-    return cv2.addWeighted(img, 1.0 - cfg.VIS.SHOW_KPS.KPS_ALPHA, kp_mask, cfg.VIS.SHOW_KPS.KPS_ALPHA, 0)
+    return cv2.addWeighted(img, 1.0 - vis_cfg.SHOW_KPS.KPS_ALPHA, kp_mask, vis_cfg.SHOW_KPS.KPS_ALPHA, 0)
 
 
-def vis_parsing(img, parsing, colormap, show_masks=True):
+def vis_parsing(vis_cfg, img, parsing, colormap, show_masks=True):
     """Visualizes a single binary parsing."""
     img = img.astype(np.float32)
     idx = np.nonzero(parsing)
 
-    parsing_alpha = cfg.VIS.SHOW_PARSS.PARSING_ALPHA
+    parsing_alpha = vis_cfg.SHOW_PARSS.PARSING_ALPHA
     colormap = colormap_utils.dict2array(colormap)
     parsing_color = colormap[parsing.astype(np.int)]
 
-    border_color = cfg.VIS.SHOW_PARSS.BORDER_COLOR
-    border_thick = cfg.VIS.SHOW_PARSS.BORDER_THICK
+    border_color = vis_cfg.SHOW_PARSS.BORDER_COLOR
+    border_thick = vis_cfg.SHOW_PARSS.BORDER_THICK
 
     img[idx[0], idx[1], :] *= 1.0 - parsing_alpha
     # img[idx[0], idx[1], :] += alpha * parsing_color
     img += parsing_alpha * parsing_color
 
-    if cfg.VIS.SHOW_PARSS.SHOW_BORDER and not show_masks:
+    if vis_cfg.SHOW_PARSS.SHOW_BORDER and not show_masks:
         _, contours, _ = cv2.findContours(parsing.copy(), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
         cv2.drawContours(img, contours, -1, border_color, border_thick, cv2.LINE_AA)
 
     return img.astype(np.uint8)
 
 
-def vis_uv_temp(img, uv, bbox, show_masks=True):
+def vis_uv_temp(vis_cfg, img, uv, bbox, show_masks=True):
     """Visualizes a single binary parsing."""
     padded_uv = np.zeros(img.shape, dtype=np.float32)
     uv_temp = np.array([uv[0], uv[1] * 256, uv[2] * 256]).transpose(1, 2, 0)
@@ -222,15 +221,15 @@ def vis_uv_temp(img, uv, bbox, show_masks=True):
     img = img.astype(np.float32)
     idx = np.nonzero(padded_uv[:, :, 0])
 
-    uv_alpha = cfg.VIS.SHOW_UV.UV_ALPHA
+    uv_alpha = vis_cfg.SHOW_UV.UV_ALPHA
 
-    border_color = cfg.VIS.SHOW_UV.BORDER_COLOR
-    border_thick = cfg.VIS.SHOW_UV.BORDER_THICK
+    border_color = vis_cfg.SHOW_UV.BORDER_COLOR
+    border_thick = vis_cfg.SHOW_UV.BORDER_THICK
 
     img[idx[0], idx[1], :] *= 1.0 - uv_alpha
     img += uv_alpha * padded_uv
 
-    if cfg.VIS.SHOW_UV.SHOW_BORDER and not show_masks:
+    if vis_cfg.SHOW_UV.SHOW_BORDER and not show_masks:
         _, contours, _ = cv2.findContours(
             padded_uv[:, :, 0].astype(np.uint8).copy(),
             cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE
@@ -240,10 +239,10 @@ def vis_uv_temp(img, uv, bbox, show_masks=True):
     return img.astype(np.uint8)
 
 
-def vis_uv(img, uv, bbox):
-    border_thick = cfg.VIS.SHOW_UV.BORDER_THICK
-    grid_thick = cfg.VIS.SHOW_UV.GRID_THICK
-    lines_num = cfg.VIS.SHOW_UV.LINES_NUM
+def vis_uv(vis_cfg, img, uv, bbox):
+    border_thick = vis_cfg.SHOW_UV.BORDER_THICK
+    grid_thick = vis_cfg.SHOW_UV.GRID_THICK
+    lines_num = vis_cfg.SHOW_UV.LINES_NUM
 
     uv = np.transpose(uv, (1, 2, 0))
     uv = cv2.resize(uv, (int(bbox[2] - bbox[0] + 1), int(bbox[3] - bbox[1] + 1)), interpolation=cv2.INTER_LINEAR)
@@ -291,25 +290,9 @@ def vis_uv(img, uv, bbox):
     return img
 
 
-def vis_hier(img, hier, bbox_color):
-    border_thick = cfg.VIS.SHOW_HIER.BORDER_THICK
-    N = len(hier) // 5
-    for i in range(N):
-        if hier[i * 5 + 4] > 0:
-            cv2.rectangle(
-                img,
-                (int(hier[i * 5]), int(hier[i * 5 + 1])),
-                (int(hier[i * 5 + 2]), int(hier[i * 5 + 3])),
-                bbox_color,
-                thickness=border_thick
-            )
-
-    return img
-
-
-def get_instance_parsing_colormap(rgb=False):
-    instance_colormap = eval('colormap_utils.{}'.format(cfg.VIS.SHOW_BOX.COLORMAP))
-    parsing_colormap = eval('colormap_utils.{}'.format(cfg.VIS.SHOW_PARSS.COLORMAP))
+def get_instance_parsing_colormap(vis_cfg, rgb=False):
+    instance_colormap = eval('colormap_utils.{}'.format(vis_cfg.SHOW_BOX.COLORMAP))
+    parsing_colormap = eval('colormap_utils.{}'.format(vis_cfg.SHOW_PARSS.COLORMAP))
     if rgb:
         instance_colormap = colormap_utils.dict_bgr2rgb(instance_colormap)
         parsing_colormap = colormap_utils.dict_bgr2rgb(parsing_colormap)
@@ -317,21 +300,13 @@ def get_instance_parsing_colormap(rgb=False):
     return instance_colormap, parsing_colormap
 
 
-def vis_one_image_opencv(im, config, boxes=None, classes=None, masks=None, keypoints=None, parsings=None, uvs=None,
-                         hiers=None, dataset=None):
+def vis_one_image_opencv(im, vis_cfg, boxes=None, classes=None, masks=None, keypoints=None, parsings=None, uvs=None,
+                         dataset=None):
     """Constructs a numpy array with the detections visualized."""
     timers = defaultdict(Timer)
     timers['bbox_prproc'].tic()
 
-    global cfg
-    cfg = config
-
-    if cfg.VIS.SHOW_HIER.ENABLED and hiers is not None:
-        classes = np.array(classes)
-        boxes = boxes[classes == 1]
-        classes = classes[classes == 1]
-
-    if boxes is None or boxes.shape[0] == 0 or max(boxes[:, 4]) < cfg.VIS.VIS_TH:
+    if boxes is None or boxes.shape[0] == 0 or max(boxes[:, 4]) < vis_cfg.VIS_TH:
         return im
 
     if masks is not None and len(masks) > 0:
@@ -340,7 +315,7 @@ def vis_one_image_opencv(im, config, boxes=None, classes=None, masks=None, keypo
         bit_masks = masks
 
     # get color map
-    ins_colormap, parss_colormap = get_instance_parsing_colormap()
+    ins_colormap, parss_colormap = get_instance_parsing_colormap(vis_cfg)
 
     # Display in largest to smallest order to reduce occlusion
     areas = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
@@ -351,13 +326,13 @@ def vis_one_image_opencv(im, config, boxes=None, classes=None, masks=None, keypo
     for i in sorted_inds:
         bbox = boxes[i, :4]
         score = boxes[i, -1]
-        if score < cfg.VIS.VIS_TH:
+        if score < vis_cfg.VIS_TH:
             continue
 
         # get instance color (box, class_bg)
-        if cfg.VIS.SHOW_BOX.COLOR_SCHEME == 'category':
+        if vis_cfg.SHOW_BOX.COLOR_SCHEME == 'category':
             ins_color = ins_colormap[classes[i]]
-        elif cfg.VIS.SHOW_BOX.COLOR_SCHEME == 'instance':
+        elif vis_cfg.SHOW_BOX.COLOR_SCHEME == 'instance':
             instance_id = instance_id % len(ins_colormap.keys())
             ins_color = ins_colormap[instance_id]
         else:
@@ -365,53 +340,46 @@ def vis_one_image_opencv(im, config, boxes=None, classes=None, masks=None, keypo
         instance_id += 1
 
         # show box (off by default)
-        if cfg.VIS.SHOW_BOX.ENABLED:
+        if vis_cfg.SHOW_BOX.ENABLED:
             timers['show_box'].tic()
-            im = vis_bbox(im, (bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]), ins_color)
+            im = vis_bbox(vis_cfg, im, (bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]), ins_color)
             timers['show_box'].toc()
 
         # show class (off by default)
-        if cfg.VIS.SHOW_CLASS.ENABLED:
+        if vis_cfg.SHOW_CLASS.ENABLED:
             timers['show_class'].tic()
             class_str = get_class_string(classes[i], score, dataset)
-            im = vis_class(im, (bbox[0], bbox[1] - 2), class_str, ins_color)
+            im = vis_class(vis_cfg, im, (bbox[0], bbox[1] - 2), class_str, ins_color)
             timers['show_class'].toc()
 
-        show_masks = True if cfg.VIS.SHOW_MASK.ENABLED and masks is not None and len(masks) > i else False
-        show_kpts = True if cfg.VIS.SHOW_KPS.ENABLED and keypoints is not None and len(keypoints) > i else False
-        show_parss = True if cfg.VIS.SHOW_PARSS.ENABLED and parsings is not None and len(parsings) > i else False
-        show_uvs = True if cfg.VIS.SHOW_UV.ENABLED and uvs is not None and len(uvs) > i else False
-        show_hiers = True if cfg.VIS.SHOW_HIER.ENABLED and hiers is not None and len(hiers) > i else False
+        show_masks = True if vis_cfg.SHOW_MASK.ENABLED and masks is not None and len(masks) > i else False
+        show_kpts = True if vis_cfg.SHOW_KPS.ENABLED and keypoints is not None and len(keypoints) > i else False
+        show_parss = True if vis_cfg.SHOW_PARSS.ENABLED and parsings is not None and len(parsings) > i else False
+        show_uvs = True if vis_cfg.SHOW_UV.ENABLED and uvs is not None and len(uvs) > i else False
 
         # show mask
         if show_masks:
             timers['show_masks'].tic()
-            im = vis_mask(im, bit_masks[..., i], ins_color, show_parss=show_parss)
+            im = vis_mask(vis_cfg, im, bit_masks[..., i], ins_color, show_parss=show_parss)
             timers['show_masks'].toc()
 
         # show keypoints
         if show_kpts:
             timers['show_kpts'].tic()
-            im = vis_keypoints(im, keypoints[i], show_parss=show_parss)
+            im = vis_keypoints(vis_cfg, im, keypoints[i], show_parss=show_parss)
             timers['show_kpts'].toc()
 
         # show parsings
         if show_parss:
             timers['show_parss'].tic()
-            im = vis_parsing(im, parsings[i], parss_colormap, show_masks=show_masks)
+            im = vis_parsing(vis_cfg, im, parsings[i], parss_colormap, show_masks=show_masks)
             timers['show_parss'].toc()
 
         # show uvs
         if show_uvs:
             timers['show_uvs'].tic()
-            im = vis_uv(im, uvs[i], bbox)
+            im = vis_uv(vis_cfg, im, uvs[i], bbox)
             timers['show_uvs'].toc()
-
-        # show hiers
-        if show_hiers:
-            timers['show_hiers'].tic()
-            im = vis_hier(im, hiers[i], ins_color)
-            timers['show_hiers'].toc()
 
     # for k, v in timers.items():
     #     print(' | {}: {:.3f}s'.format(k, v.total_time))

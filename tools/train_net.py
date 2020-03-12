@@ -10,17 +10,17 @@ from apex import amp
 from apex.parallel import DistributedDataParallel
 
 import _init_paths  # pylint: disable=unused-import
-from pet.utils.misc import mkdir_p, logging_rank
-from pet.utils.net import convert_bn2affine_model, convert_conv2syncbn_model, mismatch_params_filter
-from pet.utils.measure import measure_model
-from pet.utils.checkpointer import CheckPointer
-from pet.utils.optimizer import Optimizer
-from pet.utils.lr_scheduler import LearningRateScheduler
-from pet.utils.logger import TrainingLogger
+from utils.misc import mkdir_p, logging_rank
+from utils.net import convert_bn2affine_model, convert_conv2syncbn_model, mismatch_params_filter
+from utils.measure import measure_model
+from utils.checkpointer import CheckPointer
+from utils.optimizer import Optimizer
+from utils.lr_scheduler import LearningRateScheduler
+from utils.logger import TrainingLogger
 
-from pet.instance.core.config import cfg, merge_cfg_from_file, merge_cfg_from_list
-from pet.instance.datasets import build_dataset, make_train_data_loader
-from pet.instance.modeling.model_builder import Generalized_CNN
+from instance.core.config import cfg, merge_cfg_from_file, merge_cfg_from_list
+from instance.datasets import build_dataset, make_train_data_loader
+from instance.modeling.model_builder import Generalized_CNN
 
 # Parse arguments
 parser = argparse.ArgumentParser(description='Pet Model Training')

@@ -1,10 +1,10 @@
 import torch
 
-from pet.instance.modeling.uv_head import heads
-from pet.instance.modeling.uv_head import outputs
-from pet.instance.modeling.uv_head.loss import UV_loss
-from pet.instance.modeling import registry
-from pet.instance.core.config import cfg
+from instance.modeling.uv_head import heads
+from instance.modeling.uv_head import outputs
+from instance.modeling.uv_head.loss import UV_loss
+from instance.modeling import registry
+from instance.core.config import cfg
 
 
 class UV(torch.nn.Module):

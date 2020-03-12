@@ -1,13 +1,13 @@
 import torch
 from torch import nn
 
-from pet.utils.misc import logging_rank
-from pet.utils.data.structures.bounding_box import BoxList
-from pet.instance.modeling.parsing_head.parsingiou import heads
-from pet.instance.modeling.parsing_head.parsingiou import outputs
-from pet.instance.modeling.parsing_head.parsingiou.loss import parsingiou_loss_evaluator
-from pet.instance.modeling import registry
-from pet.instance.core.config import cfg
+from utils.misc import logging_rank
+from utils.data.structures.bounding_box import BoxList
+from instance.modeling.parsing_head.parsingiou import heads
+from instance.modeling.parsing_head.parsingiou import outputs
+from instance.modeling.parsing_head.parsingiou.loss import parsingiou_loss_evaluator
+from instance.modeling import registry
+from instance.core.config import cfg
 
 
 class ParsingIoU(torch.nn.Module):

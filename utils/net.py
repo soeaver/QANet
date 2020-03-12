@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-import pet.models.ops as ops
+import models.ops as ops
 
 
 def make_conv(in_channels, out_channels, kernel=3, stride=1, dilation=1, padding=None, groups=1, 

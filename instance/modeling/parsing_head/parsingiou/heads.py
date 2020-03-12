@@ -2,9 +2,9 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from pet.utils.net import make_conv, make_fc
-from pet.instance.modeling import registry
-from pet.instance.core.config import cfg
+from utils.net import make_conv, make_fc
+from instance.modeling import registry
+from instance.core.config import cfg
 
 
 @registry.PARSINGIOU_HEADS.register("convx_head")

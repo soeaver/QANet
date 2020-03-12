@@ -3,9 +3,9 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 
-from pet.models.ops import PoolPointsInterp
-from pet.models.ops import smooth_l1_loss_LW
-from pet.instance.core.config import cfg
+from models.ops import PoolPointsInterp
+from models.ops import smooth_l1_loss_LW
+from instance.core.config import cfg
 
 
 def UV_loss(outputs, target_UV, target_mask):

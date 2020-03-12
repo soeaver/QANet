@@ -2,12 +2,12 @@ import os
 
 import torch.utils.data
 
-from pet.utils.data import datasets as D
-from pet.utils.data import samplers
-from pet.utils.misc import logging_rank
-from pet.instance.datasets import build_transforms
-from pet.instance.datasets.dataset_catalog import contains, get_im_dir, get_ann_fn
-from pet.instance.core.config import cfg
+from utils.data import datasets as D
+from utils.data import samplers
+from utils.misc import logging_rank
+from instance.datasets import build_transforms
+from instance.datasets.dataset_catalog import contains, get_im_dir, get_ann_fn
+from instance.core.config import cfg
 
 
 def build_dataset(dataset_list, is_train=True, local_rank=0):

@@ -10,9 +10,9 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 import torch
 import torch.utils.data as data
 
-from pet.utils.data.structures.instance import Instance
-from pet.utils.misc import logging_rank
-from pet.utils.comm import get_rank
+from utils.data.structures.instance import Instance
+from utils.misc import logging_rank
+from utils.comm import get_rank
 
 
 def has_valid_annotation(obj, entry):

@@ -3,8 +3,8 @@ import numpy as np
 
 import pycocotools.mask as mask_util
 
-from pet.instance.utils.transforms import get_affine_transform, affine_transform
-from pet.instance.core.config import cfg
+from instance.utils.transforms import get_affine_transform, affine_transform
+from instance.core.config import cfg
 
 
 def uvs_results(outputs, image_info, boxes, center, scale):

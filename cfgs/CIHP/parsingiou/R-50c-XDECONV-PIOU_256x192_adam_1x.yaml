@@ -14,7 +14,7 @@
 # parsing (det=69.6): mIoU:53.9/AP50:68.6/APvol:57.6/PCP50:56.0 (sqrt(gt_iou_score * bbox_score));
 PIXEL_MEANS: [0.485, 0.456, 0.406]
 PIXEL_STDS: [0.229, 0.224, 0.225]
-CKPT: 'ckpts/instance/CIHP/parsingiou/R-50c-XDECONV-PIOU_256x192_adam_1x'
+CKPT: 'ckpts/CIHP/parsingiou/R-50c-XDECONV-PIOU_256x192_adam_1x'
 DISPLAY_ITER: 20
 MODEL:
   TYPE: 'generalized_cnn'

@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from pet.utils.net import make_conv
-from pet.instance.core.config import cfg
-from pet.instance.modeling import registry
+from utils.net import make_conv
+from instance.core.config import cfg
+from instance.modeling import registry
 
 
 # ---------------------------------------------------------------------------- #

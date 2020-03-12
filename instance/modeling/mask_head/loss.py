@@ -1,7 +1,7 @@
 import torch
 from torch.nn import functional as F
 
-from pet.instance.core.config import cfg
+from instance.core.config import cfg
 
 
 def mask_loss(outputs, targets, labels):

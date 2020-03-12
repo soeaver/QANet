@@ -1,10 +1,10 @@
 import torch
 import numpy as np
 
-from pet.utils.data.structures.bounding_box import BoxList
-from pet.models.ops import nms as _box_nms
-from pet.models.ops import ml_nms as _box_ml_nms
-from pet.models.ops import boxes as box_utils
+from utils.data.structures.bounding_box import BoxList
+from models.ops import nms as _box_nms
+from models.ops import ml_nms as _box_ml_nms
+from models.ops import boxes as box_utils
 
 
 def boxlist_nms(boxlist, nms_thresh, max_proposals=-1, score_field="scores"):

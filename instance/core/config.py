@@ -769,6 +769,9 @@ __C.PARSING.INDEX_THRESH = 0.2
 # Loss weight for parsing
 __C.PARSING.LOSS_WEIGHT = 1
 
+# Use Parsing edge for Parsing head
+__C.PARSING.PARSINGEDGE_ON = False
+
 # Use Parsing IoU for Parsing head
 __C.PARSING.PARSINGIOU_ON = False
 

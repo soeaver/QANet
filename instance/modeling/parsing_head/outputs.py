@@ -11,11 +11,21 @@ class conv1x1_outputs(nn.Module):
     def __init__(self, dim_in, spatial_scale):
         super().__init__()
         self.classify = nn.Conv2d(dim_in, cfg.PARSING.NUM_PARSING, kernel_size=1, stride=1, padding=0)
+        if cfg.PARSING.PARSINGEDGE_ON:
+            self.edge_parser = nn.Conv2d(dim_in, 2, kernel_size=1, stride=1, padding=0)
         self.spatial_scale = spatial_scale[0]
 
     def forward(self, x):
-        x = self.classify(x)
+        parsing = self.classify(x)
+        if cfg.PARSING.PARSINGEDGE_ON:
+            edge = self.edge_parser(x)
+
         up_scale = int(1 / self.spatial_scale)
         if up_scale > 1:
-            x = F.interpolate(x, scale_factor=up_scale, mode="bilinear", align_corners=False)
-        return x
+            parsing = F.interpolate(parsing, scale_factor=up_scale, mode="bilinear", align_corners=False)
+            if cfg.PARSING.PARSINGEDGE_ON:
+                edge = F.interpolate(edge, scale_factor=up_scale, mode="bilinear", align_corners=False)
+        if cfg.PARSING.PARSINGEDGE_ON:
+            return [parsing, edge]
+        else:
+            return [parsing]

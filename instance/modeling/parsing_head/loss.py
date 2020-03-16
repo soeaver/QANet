@@ -68,7 +68,7 @@ class ParsingLossComputation(object):
             edge_targets = np.zeros(parsing_targets_np.shape)
             for n in range(N):
                 edge_targets[n] = generate_edge(parsing_targets_np[n])
-            edge_targets = torch.from_numpy(edge_targets).to(self.device)
+            edge_targets = torch.from_numpy(edge_targets).to(self.device, dtype=torch.long)
 
             pos_num = torch.sum(edge_targets == 1, dtype=torch.float)
             neg_num = torch.sum(edge_targets == 0, dtype=torch.float)

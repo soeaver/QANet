@@ -24,3 +24,4 @@ from .pool_points_interp import PoolPointsInterp
 from .context_block import GlobalContextBlock
 from .mixture_batchnorm import MixtureBatchNorm2d, MixtureGroupNorm
 from .lovasz_hinge_loss import LovaszHinge
+from .lovasz_softmax_loss import LovaszSoftmax

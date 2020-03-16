@@ -34,20 +34,20 @@ class Parsing(torch.nn.Module):
 
         if cfg.PARSING.PARSINGIOU_ON:
             loss_parsing, parsingiou_targets = self.loss_evaluator(parsing_logits, targets['parsing'])
-            loss_parsingiou, _ = self.ParsingIoU(parsing_feat, parsing_logits, parsingiou_targets)
+            loss_parsingiou, _ = self.ParsingIoU(parsing_feat, parsing_logits[0], parsingiou_targets)
             return None, dict(loss_parsing=loss_parsing, loss_parsingiou=loss_parsingiou)
         else:
-            loss_parsing = self.loss_evaluator(parsing_logits, targets['parsing'])
-            return None, dict(loss_parsing=loss_parsing)
+            loss_parsing, loss_lavasz = self.loss_evaluator(parsing_logits, targets['parsing'])
+            return None, dict(loss_parsing=loss_parsing, loss_lavasz=loss_lavasz)
 
     def _forward_test(self, conv_features):
         parsing_feat = self.Head(conv_features)
         parsing_logits = self.Output(parsing_feat)
 
-        output = F.softmax(parsing_logits, dim=1)
+        output = F.softmax(parsing_logits[0], dim=1)
 
         if cfg.PARSING.PARSINGIOU_ON:
-            _, parsingiou = self.ParsingIoU(parsing_feat, parsing_logits, None)
+            _, parsingiou = self.ParsingIoU(parsing_feat, parsing_logits[0], None)
             return dict(parsings=output, parsing_scores=parsingiou.squeeze()), {}
         else:
             return dict(parsings=output, parsing_scores=None), {}

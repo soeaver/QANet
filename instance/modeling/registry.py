@@ -28,6 +28,12 @@ PARSING_OUTPUTS = Registry()
 PARSINGIOU_HEADS = Registry()
 PARSINGIOU_OUTPUTS = Registry()
 
+# QANet Head
+QANET_HEADS = Registry()
+QANET_OUTPUTS = Registry()
+QAIOU_HEADS = Registry()
+QAIOU_OUTPUTS = Registry()
+
 # UV Head
 UV_HEADS = Registry()
 UV_OUTPUTS = Registry()

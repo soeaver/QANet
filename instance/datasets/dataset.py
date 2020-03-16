@@ -33,7 +33,7 @@ def build_dataset(dataset_list, is_train=True, local_rank=0):
             ann_types = ann_types + ('mask',)
         if cfg.MODEL.KEYPOINT_ON:
             ann_types = ann_types + ('keypoints',)
-        if cfg.MODEL.PARSING_ON:
+        if cfg.MODEL.PARSING_ON or cfg.MODEL.QANET_ON:
             ann_types = ann_types + ('parsing',)
         if cfg.MODEL.UV_ON:
             ann_types = ann_types + ('uv',)

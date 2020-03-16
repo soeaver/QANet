@@ -77,6 +77,9 @@ __C.MODEL.PARSING_ON = False
 # Indicates the model makes UV predictor
 __C.MODEL.UV_ON = False
 
+# Indicates the model makes qanet predictor
+__C.MODEL.QANET_ON = False
+
 # Type of batch normalizaiton, default: 'freeze'
 # E.g., 'normal', 'freeze', 'sync', ...
 __C.MODEL.BATCH_NORM = 'normal'
@@ -895,6 +898,84 @@ __C.UV.GCE_HEAD.USE_BN = False
 
 # Use GroupNorm in the UV gce head
 __C.UV.GCE_HEAD.USE_GN = False
+
+
+# ---------------------------------------------------------------------------- #
+# QANet options
+# ---------------------------------------------------------------------------- #
+__C.QANET = AttrDict()
+
+# The head of model to use
+# (e.g., 'simple_none_head', 'gce')
+__C.QANET.QANET_HEAD = 'simple_none_head'
+
+# Output module of qanet head
+__C.QANET.QANET_OUTPUT = 'conv1x1_outputs'
+
+# Output module of qanet loss
+__C.QANET.QANET_LOSS = 'parsing_loss'
+
+# Parsing Number for parsing estimation
+__C.QANET.NUM_PARSING = 20
+
+# Minimum score threshold (assuming scores in a [0, 1] range) for semantic
+# segmentation results.
+# 0.3 for CIHP, 0.05 for MHP-v2
+__C.QANET.SEMSEG_SCORE_THRESH = 0.3
+
+# Minimum score threshold (assuming scores in a [0, 1] range); a value chosen to
+# balance obtaining high recall with not having too many low precision parsings
+__C.QANET.SCORE_THRESH = 0.001
+
+# Evaluate the AP metrics
+__C.QANET.EVAL_AP = True
+
+# Index thresh
+__C.QANET.INDEX_THRESH = 0.2
+
+# Loss weight for parsing
+__C.QANET.PARSING_LOSS_WEIGHT = 1.0
+
+# Loss weight for quality
+__C.QANET.QUALITY_LOSS_WEIGHT = 1.0
+
+# Use Parsing IoU for Parsing head
+__C.QANET.QAIOU_ON = False
+
+# Use bbox confidence as parsing confidence
+__C.QANET.USE_BBOX_CONF = False
+
+# ---------------------------------------------------------------------------- #
+# QANet gce head options
+# ---------------------------------------------------------------------------- #
+__C.QANET.GCE_HEAD = AttrDict()
+
+# Hidden Conv layer dimension
+__C.QANET.GCE_HEAD.CONV_DIM = 512
+
+# Dimension for ASPPV3
+__C.QANET.GCE_HEAD.ASPPV3_DIM = 256
+
+# Dilation for ASPPV3
+__C.QANET.GCE_HEAD.ASPPV3_DILATION = (6, 12, 18)
+
+# Number of stacked Conv layers in GCE head before ASPPV3
+__C.QANET.GCE_HEAD.NUM_CONVS_BEFORE_ASPPV3 = 0
+
+# Number of stacked Conv layers in GCE head after ASPPV3
+__C.QANET.GCE_HEAD.NUM_CONVS_AFTER_ASPPV3 = 0
+
+# Use NonLocal in the Keypoint gce head
+__C.QANET.GCE_HEAD.USE_NL = False
+
+# Reduction ration of nonlocal
+__C.QANET.GCE_HEAD.NL_RATIO = 1.0
+
+# Use BatchNorm in the Keypoint gce head
+__C.QANET.GCE_HEAD.USE_BN = False
+
+# Use GroupNorm in the Keypoint gce head
+__C.QANET.GCE_HEAD.USE_GN = False
 
 
 # ---------------------------------------------------------------------------- #

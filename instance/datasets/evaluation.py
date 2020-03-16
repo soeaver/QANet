@@ -51,6 +51,17 @@ def evaluation(dataset, all_info, all_masks, all_keyps, all_parss, all_uvs, clea
         res_file = os.path.join(output_folder, 'uv_%s_results.pkl' % joint_name)
         res = evaluate_predictions_on_coco(dataset.coco, results['UV'], res_file, 'uv')
         logging_rank('Evaluating uv is done!')
+    if cfg.MODEL.QANET_ON:
+        results['parsing'] = prepare_for_qanet(dataset, all_info, all_parss)
+        eval_ap = cfg.QANET.EVAL_AP
+        num_parsing = cfg.QANET.NUM_PARSING
+        assert len(cfg.TEST.DATASETS) == 1, 'Parsing only support one dataset now'
+        im_dir = dataset_catalog.get_im_dir(cfg.TEST.DATASETS[0])
+        ann_fn = dataset_catalog.get_ann_fn(cfg.TEST.DATASETS[0])
+        res = evaluate_parsing(
+            results['parsing'], eval_ap, cfg.QANET.SCORE_THRESH, num_parsing, im_dir, ann_fn, output_folder
+        )
+        logging_rank('Evaluating qanet is done!')
     if clean_up:    # clean up all the results files
         shutil.rmtree(output_folder)
         
@@ -160,6 +171,44 @@ def prepare_for_parsing(dataset, all_info, all_parss):
         img_parsing = np.array(img_parsing)
         img_score = np.array(img_score)
         parsing_png(img_parsing, img_score, cfg.PARSING.SEMSEG_SCORE_THRESH, img_info, output_folder)
+        all_parsing.append(img_parsing)
+        all_scores.append(img_score)
+
+    results = [all_parsing, all_scores]
+    return results
+
+
+def prepare_for_qanet(dataset, all_info, all_parss):
+    # person x (parsing)
+    output_folder = os.path.join(cfg.CKPT, 'test')
+    _parss = []
+    for idx, parsing in enumerate(all_parss):
+        score = all_info[idx][1] if cfg.QANET.USE_BBOX_CONF else all_info[idx][1] * all_info[idx][9]
+
+        _parss.append({
+            'parsing': parsing,
+            'image': all_info[idx][0],
+            'score': score,
+            'area': all_info[idx][2]
+        })
+    # image x person x (parsing)
+    parss = defaultdict(list)
+    for parsing in _parss:
+        parss[parsing['image']].append(parsing)
+
+    all_parsing = []
+    all_scores = []
+    for img in tqdm(parss.keys(), desc='Create parsing image'):
+        img_parsing = []
+        img_score = []
+        img_parss = parss[img]
+        for n_p in img_parss:
+            img_parsing.append(n_p['parsing'])
+            img_score.append(n_p['score'])
+        img_info = dataset.coco.loadImgs(int(img_parss[0]['image']))[0]
+        img_parsing = np.array(img_parsing)
+        img_score = np.array(img_score)
+        parsing_png(img_parsing, img_score, cfg.QANET.SEMSEG_SCORE_THRESH, img_info, output_folder)
         all_parsing.append(img_parsing)
         all_scores.append(img_score)
 

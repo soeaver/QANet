@@ -7,6 +7,7 @@ from instance.modeling.mask_head.mask import Mask
 from instance.modeling.keypoint_head.keypoint import Keypoint
 from instance.modeling.parsing_head.parsing import Parsing
 from instance.modeling.uv_head.uv import UV
+from instance.modeling.qanet_head.qanet import QANet
 from instance.core.config import cfg
 from instance.modeling import registry
 
@@ -43,6 +44,9 @@ class Generalized_CNN(nn.Module):
         if cfg.MODEL.UV_ON:
             self.UV = UV(self.dim_in, self.spatial_scale)
 
+        if cfg.MODEL.QANET_ON:
+            self.QANet = QANet(self.dim_in, self.spatial_scale)
+
     def forward(self, x, targets=None):
         # Backbone
         conv_features = self.Conv_Body(x)
@@ -66,6 +70,9 @@ class Generalized_CNN(nn.Module):
         if cfg.MODEL.UV_ON:
             result_uv, loss_uv = self.UV(conv_features, targets)
             losses.update(loss_uv)
+        if cfg.MODEL.QANET_ON:
+            result_qanet, loss_qanet = self.QANet(conv_features, targets)
+            losses.update(loss_qanet)
 
         if self.training:
             outputs = {'metrics': {}, 'losses': {}}
@@ -98,3 +105,7 @@ class Generalized_CNN(nn.Module):
     def uv_net(self, conv_features, targets=None):
         result_uv, loss_uv = self.UV(conv_features, targets)
         return result_uv
+
+    def qanet_net(self, conv_features, targets=None):
+        result_qanet, loss_qanet = self.QANet(conv_features, targets)
+        return result_qanet

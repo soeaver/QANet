@@ -8,6 +8,7 @@ from instance.modeling.mask_head.inference import masks_results
 from instance.modeling.keypoint_head.inference import get_final_preds
 from instance.modeling.parsing_head.inference import parsing_results
 from instance.modeling.uv_head.inference import uvs_results
+from instance.modeling.qanet_head.inference import qanet_results
 from instance.utils.transforms import flip_back, xywh_to_xyxy
 from utils.data.structures.densepose_uv import flip_uv_featuremap
 
@@ -198,6 +199,63 @@ def uv_inference(model, features):
     return _uv_results
 
 
+def qanet_inference(model, features):
+    if 'CIHP' in cfg.TEST.DATASETS[0]:
+        flip_map = ([14, 15], [16, 17], [18, 19])
+    elif 'MHP-v2' in cfg.TEST.DATASETS[0]:
+        flip_map = ([5, 6], [7, 8], [22, 23], [24, 25], [26, 27], [28, 29], [30, 31], [32, 33])
+    elif 'ATR' in cfg.TEST.DATASETS[0]:
+        flip_map = ([9, 10], [12, 13], [14, 15])
+    elif 'LIP' in cfg.TEST.DATASETS[0]:
+        flip_map = ([14, 15], [16, 17], [18, 19])
+    else:
+        flip_map = ()
+
+    _idx = 0
+    size = [cfg.TEST.SCALE[1], cfg.TEST.SCALE[0]]
+    parsing_results = []
+    parsing_scores = []
+    outputs = model.qanet_net(features[_idx])
+    results = outputs['parsings'].cpu().numpy()
+    scores = outputs['parsing_scores']
+    if scores is not None:
+        scores = scores.cpu().numpy()
+    _idx += 1
+    parsing_results.append(results)
+    parsing_scores.append(scores)
+    if cfg.TEST.AUG.H_FLIP:
+        results_hf = model.qanet_net(features[_idx])['parsings'].cpu().numpy()
+        scores_hf = model.qanet_net(features[_idx])['parsing_scores']
+        if scores_hf is not None:
+            scores_hf = scores_hf.cpu().numpy()
+        _idx += 1
+        results_hf = flip_back(results_hf, flip_map)
+        # feature is not aligned, shift flipped heatmap for higher accuracy
+        if cfg.TEST.AUG.SHIFT_HEATMAP:
+            results_hf[:, :, :, 1:] = results_hf[:, :, :, 0:-1]
+        parsing_results.append(results_hf)
+        parsing_scores.append(scores_hf)
+
+    for scale in cfg.TEST.AUG.SCALES:
+        results_scl = model.qanet_net(features[_idx])['parsings']
+        _idx += 1
+        results_scl = F.interpolate(results_scl, size=size, mode="bilinear", align_corners=False)
+        parsing_results.append(results_scl.cpu().numpy())
+        if cfg.TEST.AUG.H_FLIP:
+            results_scl_hf = model.qanet_net(features[_idx])['parsings']
+            _idx += 1
+            results_scl_hf = F.interpolate(results_scl_hf, size=size, mode="bilinear", align_corners=False)
+            results_scl_hf = flip_back(results_scl_hf.cpu().numpy(), flip_map)
+            # feature is not aligned, shift flipped heatmap for higher accuracy
+            if cfg.TEST.AUG.SHIFT_HEATMAP:
+                results_scl_hf[:, :, :, 1:] = results_scl_hf[:, :, :, 0:-1]
+            parsing_results.append(results_scl_hf)
+
+    parsing_results = np.mean(parsing_results, axis=0)
+    parsing_scores = np.mean(parsing_scores, axis=0) if scores is not None else None
+    return parsing_results, parsing_scores
+
+
 def im_conv_body_net(model, inputs, scale=None, flip=False):
     if scale is not None:
         size = [scale[1], scale[0]]
@@ -267,6 +325,15 @@ def post_processing(result, targets, val_set):
         ins_info[:, 8] = uv_scores
     else:
         uvs = []
+
+    if cfg.MODEL.QANET_ON:
+        parss, pars_scores = qanet_results(result['parsing'], image_info, c, s)
+        if result['parsing_score'] is None:
+            ins_info[:, 9] = pars_scores
+        else:
+            ins_info[:, 9] = result['parsing_score']
+    else:
+        parss = []
 
     ins_info = list(ins_info)
 

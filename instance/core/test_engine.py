@@ -19,7 +19,7 @@ from instance.core.config import cfg, merge_cfg_from_file, merge_cfg_from_list
 from instance.modeling.model_builder import Generalized_CNN
 from instance.datasets import build_dataset, make_test_data_loader, evaluation
 from instance.core.test import conv_body_inference, mask_inference, keypoint_inference
-from instance.core.test import parsing_inference, uv_inference, post_processing
+from instance.core.test import parsing_inference, uv_inference, qanet_inference, post_processing
 
 
 def run_inference(args, ind_range=None, multi_gpu_testing=False):
@@ -177,6 +177,8 @@ def test(model, val_set, start_ind, end_ind, logger):
                 result['parsing'], result['parsing_score'] = parsing_inference(model, features)
             if cfg.MODEL.UV_ON:
                 result['uv'] = uv_inference(model, features)
+            if cfg.MODEL.QANET_ON:
+                result['parsing'], result['parsing_score'] = qanet_inference(model, features)
             logger.infer_toc()
 
             logger.post_tic()
@@ -193,7 +195,7 @@ def test(model, val_set, start_ind, end_ind, logger):
 
                     ims_masks = [masks[k]] if cfg.MODEL.MASK_ON else None
                     ims_keyps = [keyps[k].transpose()] if cfg.MODEL.KEYPOINT_ON else None
-                    ims_parss = [parss[k]] if cfg.MODEL.PARSING_ON else None
+                    ims_parss = [parss[k]] if cfg.MODEL.PARSING_ON or cfg.MODEL.QANET_ON else None
                     ims_uvs = [uvs[k]] if cfg.MODEL.UV_ON else None
                     vis_im = vis_utils.vis_one_image_opencv(
                         im,

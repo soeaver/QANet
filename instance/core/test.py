@@ -296,10 +296,12 @@ def post_processing(result, targets, val_set):
     boxes_xyxy = xywh_to_xyxy(boxes)
     boxes_score = np.hstack((boxes_xyxy, score[:, np.newaxis])).astype(np.float32, copy=False)
 
+    masks = []
+    keyps = []
+    parss = []
+    uvs = []
     if cfg.MODEL.MASK_ON:
         masks = masks_results(result['mask'], image_info, c, s, classes)
-    else:
-        masks = []
 
     if cfg.MODEL.KEYPOINT_ON:
         keyps = np.zeros((im_per_batch, cfg.KEYPOINT.NUM_JOINTS, 3), dtype=np.float32)
@@ -307,8 +309,6 @@ def post_processing(result, targets, val_set):
         keyps[:, :, 0:2] = preds[:, :, 0:2]
         keyps[:, :, 2:3] = maxvals
         keyps = list(keyps)
-    else:
-        keyps = []
 
     if cfg.MODEL.PARSING_ON:
         parss, pars_scores = parsing_results(result['parsing'], image_info, c, s)
@@ -316,15 +316,11 @@ def post_processing(result, targets, val_set):
             ins_info[:, 9] = pars_scores
         else:
             ins_info[:, 9] = result['parsing_score']
-    else:
-        parss = []
 
     if cfg.MODEL.UV_ON:
         uvs, uv_scores = uvs_results(result['uv'], image_info, boxes, c, s)
         ins_info[:, 4:8] = boxes
         ins_info[:, 8] = uv_scores
-    else:
-        uvs = []
 
     if cfg.MODEL.QANET_ON:
         parss, pars_scores = qanet_results(result['parsing'], image_info, c, s)
@@ -332,8 +328,6 @@ def post_processing(result, targets, val_set):
             ins_info[:, 9] = pars_scores
         else:
             ins_info[:, 9] = result['parsing_score']
-    else:
-        parss = []
 
     ins_info = list(ins_info)
 

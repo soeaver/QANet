@@ -1,334 +1,353 @@
+import os
 import numpy as np
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
-from instance.core.config import cfg
-from instance.modeling.mask_head.inference import masks_results
-from instance.modeling.keypoint_head.inference import get_final_preds
-from instance.modeling.parsing_head.inference import parsing_results
-from instance.modeling.uv_head.inference import uvs_results
-from instance.modeling.qanet_head.inference import qanet_results
-from instance.utils.transforms import flip_back, xywh_to_xyxy
-from utils.data.structures.densepose_uv import flip_uv_featuremap
+from lib.ops import roi_align_rotated
+from lib.datasets.structures.image_list import to_image_list
+from lib.datasets.structures.instance_box import instancebox_split
+from instance.modeling.mask_head.inference import get_mask_results
+from instance.modeling.keypoint_head.inference import get_keypoints_results
+from instance.modeling.parsing_head.inference import get_parsing_results
+from instance.modeling.uv_head.inference import get_uv_results
+from lib.datasets.structures.keypoint import flip_keypoints_prob
+from lib.datasets.structures.parsing import flip_parsing_prob
+from lib.datasets.structures.densepose_uv import flip_uv_prob
+from lib.utils.comm import is_main_process
+from lib.utils.misc import mkdir_p
+from instance.datasets.dataset_catalog import get_extra_fields
 
 
-def conv_body_inference(model, inputs):
-    features = [im_conv_body_net(model, inputs)]
-    if cfg.TEST.AUG.H_FLIP:
-        features.append(im_conv_body_net(model, inputs, flip=True))
+class TestEngine(object):
+    def __init__(self, cfg, model):
+        self.cfg = cfg
+        self.model = model
+        self.result = {}
+        self.features = []
+        self.extra_fields = get_extra_fields(self.cfg.TEST.DATASETS[0])
+        self.preprocess_inputs = PreprocessInputs(self.cfg)
 
-    for scale in cfg.TEST.AUG.SCALES:
-        features.append(im_conv_body_net(model, inputs, scale=scale))
-        if cfg.TEST.AUG.H_FLIP:
-            features.append(im_conv_body_net(model, inputs, scale=scale, flip=True))
+        if is_main_process():
+            if not os.path.isdir(os.path.join(self.cfg.CKPT, 'test')):
+                mkdir_p(os.path.join(self.cfg.CKPT, 'test'))
+            if self.cfg.VIS.ENABLED:
+                if not os.path.exists(os.path.join(self.cfg.CKPT, 'vis')):
+                    mkdir_p(os.path.join(self.cfg.CKPT, 'vis'))
 
-    return features
+    def __call__(self, inputs, targets):
+        if self.cfg.TEST.INSTANCES_PER_BATCH == -1:
+            self.conv_body_inference(inputs, targets)
+            if len(self.features) == 0:
+                return self.result
+            self.mask_inference(targets) if self.cfg.MODEL.MASK_ON else None
+            self.keypoint_inference(targets) if self.cfg.MODEL.KEYPOINT_ON else None
+            self.parsing_inference(targets) if self.cfg.MODEL.PARSING_ON else None
+            self.uv_inference(targets) if self.cfg.MODEL.UV_ON else None
+        else:
+            assert self.cfg.TEST.IMS_PER_GPU == 1, 'Instance batch test only supports IMS_PER_GPU == 1'
+            batch_size = self.cfg.TEST.INSTANCES_PER_BATCH
+            targets_list = instancebox_split(targets[0], batch_size)
+            targets_list = [[targets] for targets in targets_list]
+            if self.cfg.TEST.AFFINE_MODE == 'cv2' and len(inputs[0]) > 0:
+                inputs_list = inputs[0].split(batch_size, dim=0)
+                inputs_list = [[_] for _ in inputs_list]
 
+            result_list = []
+            for i, targets in enumerate(targets_list):
+                if self.cfg.TEST.AFFINE_MODE == 'cv2' and len(inputs[0]) > 0:
+                    inputs = inputs_list[i]
+                self.conv_body_inference(inputs, targets)
+                if len(self.features) == 0:
+                    return self.result
+                self.mask_inference(targets) if self.cfg.MODEL.MASK_ON else None
+                self.keypoint_inference(targets) if self.cfg.MODEL.KEYPOINT_ON else None
+                self.parsing_inference(targets) if self.cfg.MODEL.PARSING_ON else None
+                self.uv_inference(targets) if self.cfg.MODEL.UV_ON else None
+                result_list.append(self.result.copy())
+            for task in self.result.keys():
+                for key in self.result[task].keys():
+                    if self.result[task][key] is not None:
+                        self.result[task][key] = [torch.cat([result[task][key][0] for result in result_list])]
 
-def mask_inference(model, features):
-    _idx = 0
-    size = [cfg.TEST.SCALE[1], cfg.TEST.SCALE[0]]
-    mask_results = []
-    results = model.mask_net(features[_idx]).cpu().numpy()
-    _idx += 1
-    mask_results.append(results)
-    if cfg.TEST.AUG.H_FLIP:
-        results_hf = model.mask_net(features[_idx]).cpu().numpy()
-        _idx += 1
-        results_hf = flip_back(results_hf)
-        # feature is not aligned, shift flipped heatmap for higher accuracy
-        if cfg.TEST.AUG.SHIFT_HEATMAP:
-            results_hf[:, :, :, 1:] = results_hf[:, :, :, 0:-1]
-        mask_results.append(results_hf)
+        return self.result
 
-    for scale in cfg.TEST.AUG.SCALES:
-        results_scl = model.mask_net(features[_idx])
-        _idx += 1
-        results_scl = F.interpolate(results_scl, size=size, mode="bilinear", align_corners=False)
-        mask_results.append(results_scl.cpu().numpy())
-        if cfg.TEST.AUG.H_FLIP:
-            results_scl_hf = model.mask_net(features[_idx])
-            _idx += 1
-            results_scl_hf = F.interpolate(results_scl_hf, size=size, mode="bilinear", align_corners=False)
-            results_scl_hf = flip_back(results_scl_hf.cpu().numpy())
+    def conv_body_inference(self, inputs, targets):
+        _inputs = self.preprocess_inputs(inputs, targets)
+        if _inputs is not None:
+            features = [self.model.conv_body_net(_inputs)]
+            if self.cfg.TEST.AUG.H_FLIP:
+                inputs_hf = self.preprocess_inputs(inputs, targets, flip=True)
+                features.append(self.model.conv_body_net(inputs_hf))
+            for scale in self.cfg.TEST.AUG.SCALES:
+                inputs_scl = self.preprocess_inputs(inputs, targets, scale=scale)
+                features.append(self.model.conv_body_net(inputs_scl))
+                if self.cfg.TEST.AUG.H_FLIP:
+                    inputs_scl_hf = self.preprocess_inputs(inputs, targets, scale=scale, flip=True)
+                    features.append(self.model.conv_body_net(inputs_scl_hf))
+
+            self.features = features
+        else:
+            self.features = []
+
+    def mask_inference(self, targets):
+        labels = torch.cat([target.labels for target in targets if len(target.labels) > 0])
+        mask_probs = []
+        mask_iou_scores = []
+        aug_idx = 0
+        size = [self.cfg.TEST.SCALE[1], self.cfg.TEST.SCALE[0]]
+
+        outputs = self.model.mask_net(self.features[aug_idx], labels)
+        probs = outputs['probs']
+        mask_probs.append(probs)
+        mask_iou_scores.append(outputs['mask_iou_scores'])
+        aug_idx += 1
+
+        if self.cfg.TEST.AUG.H_FLIP:
+            outputs_hf = self.model.mask_net(self.features[aug_idx], labels)
+            probs_hf = outputs_hf['probs']
+            probs_hf = torch.flip(probs_hf, dims=(3,))
             # feature is not aligned, shift flipped heatmap for higher accuracy
-            if cfg.TEST.AUG.SHIFT_HEATMAP:
-                results_scl_hf[:, :, :, 1:] = results_scl_hf[:, :, :, 0:-1]
-            mask_results.append(results_scl_hf)
+            if self.cfg.TEST.AUG.SHIFT_HEATMAP:
+                probs_hf[:, :, :, 1:] = probs_hf[:, :, :, 0:-1]
+            mask_probs.append(probs_hf)
+            mask_iou_scores.append(outputs_hf['mask_iou_scores'])
+            aug_idx += 1
 
-    mask_results = np.mean(mask_results, axis=0)
-    return mask_results
+        for scale in self.cfg.TEST.AUG.SCALES:
+            outputs_scl = self.model.mask_net(self.features[aug_idx], labels)
+            probs_scl = F.interpolate(outputs_scl['probs'], size=size, mode="bilinear", align_corners=False)
+            mask_probs.append(probs_scl)
+            mask_iou_scores.append(outputs_scl['mask_iou_scores'])
+            aug_idx += 1
 
+            if self.cfg.TEST.AUG.H_FLIP:
+                outputs_scl_hf = self.model.mask_net(self.features[aug_idx], labels)
+                probs_scl_hf = F.interpolate(outputs_scl_hf['probs'], size=size, mode="bilinear", align_corners=False)
+                probs_scl_hf = torch.flip(probs_scl_hf, dims=(3,))
+                # feature is not aligned, shift flipped heatmap for higher accuracy
+                if self.cfg.TEST.AUG.SHIFT_HEATMAP:
+                    probs_scl_hf[:, :, :, 1:] = probs_scl_hf[:, :, :, 0:-1]
+                mask_probs.append(probs_scl_hf)
+                mask_iou_scores.append(outputs_scl_hf['mask_iou_scores'])
+                aug_idx += 1
+        mask_iou_scores = torch.stack(mask_iou_scores, dim=0)
+        mask_iou_scores = torch.mean(mask_iou_scores, dim=0)
 
-def keypoint_inference(model, features):
-    flip_map = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]]
+        ims_bitmasks, mask_pixle_scores = get_mask_results(self.cfg, mask_probs, targets)
+        boxes_per_image = [len(target) for target in targets]
+        mask_iou_scores = mask_iou_scores.split(boxes_per_image, dim=0)
+        mask_iou_scores = [_.cpu() for _ in mask_iou_scores]
 
-    _idx = 0
-    size = [cfg.KEYPOINT.HEATMAP_SIZE[1], cfg.KEYPOINT.HEATMAP_SIZE[0]]
-    keypoint_results = []
-    results = model.keypoint_net(features[_idx]).cpu().numpy()
-    _idx += 1
-    keypoint_results.append(results)
-    if cfg.TEST.AUG.H_FLIP:
-        results_hf = model.keypoint_net(features[_idx]).cpu().numpy()
-        _idx += 1
-        results_hf = flip_back(results_hf, flip_map)
-        # feature is not aligned, shift flipped heatmap for higher accuracy
-        if cfg.TEST.AUG.SHIFT_HEATMAP:
-            results_hf[:, :, :, 1:] = results_hf[:, :, :, 0:-1]
-        keypoint_results.append(results_hf)
+        self.result['mask'] = dict(
+            ims_bitmasks=ims_bitmasks, mask_iou_scores=mask_iou_scores, mask_pixle_scores=mask_pixle_scores
+        )
 
-    for scale in cfg.TEST.AUG.SCALES:
-        results_scl = model.keypoint_net(features[_idx])
-        _idx += 1
-        results_scl = F.interpolate(results_scl, size=size, mode="bilinear", align_corners=False)
-        keypoint_results.append(results_scl.cpu().numpy())
-        if cfg.TEST.AUG.H_FLIP:
-            results_scl_hf = model.keypoint_net(features[_idx])
-            _idx += 1
-            results_scl_hf = F.interpolate(results_scl_hf, size=size, mode="bilinear", align_corners=False)
-            results_scl_hf = flip_back(results_scl_hf.cpu().numpy(), flip_map)
+    def keypoint_inference(self, targets):
+        keypoint_probs = []
+        kpt_iou_scores = []
+        aug_idx = 0
+        size = [self.cfg.KEYPOINT.PROB_SIZE[1], self.cfg.KEYPOINT.PROB_SIZE[0]]
+
+        outputs = self.model.keypoint_net(self.features[aug_idx])
+        probs = outputs['probs']
+        keypoint_probs.append(probs)
+        kpt_iou_scores.append(outputs['kpt_iou_scores'])
+        aug_idx += 1
+
+        if self.cfg.TEST.AUG.H_FLIP:
+            outputs_hf = self.model.keypoint_net(self.features[aug_idx])
+            probs_hf = outputs_hf['probs']
+            probs_hf = flip_keypoints_prob(probs_hf)
             # feature is not aligned, shift flipped heatmap for higher accuracy
-            if cfg.TEST.AUG.SHIFT_HEATMAP:
-                results_scl_hf[:, :, :, 1:] = results_scl_hf[:, :, :, 0:-1]
-            keypoint_results.append(results_scl_hf)
+            if self.cfg.TEST.AUG.SHIFT_HEATMAP:
+                probs_hf[:, :, :, 1:] = probs_hf[:, :, :, 0:-1]
+            keypoint_probs.append(probs_hf)
+            kpt_iou_scores.append(outputs_hf['kpt_iou_scores'])
+            aug_idx += 1
 
-    keypoint_results = np.mean(keypoint_results, axis=0)
-    return keypoint_results
+        for scale in self.cfg.TEST.AUG.SCALES:
+            outputs_scl = self.model.keypoint_net(self.features[aug_idx])
+            probs_scl = F.interpolate(outputs_scl['probs'], size=size, mode="bilinear", align_corners=False)
+            keypoint_probs.append(probs_scl)
+            kpt_iou_scores.append(outputs_scl['kpt_iou_scores'])
+            aug_idx += 1
 
+            if self.cfg.TEST.AUG.H_FLIP:
+                outputs_scl_hf = self.model.keypoint_net(self.features[aug_idx])
+                probs_scl_hf = F.interpolate(outputs_scl_hf['probs'], size=size, mode="bilinear", align_corners=False)
+                probs_scl_hf = flip_keypoints_prob(probs_scl_hf)
+                # feature is not aligned, shift flipped heatmap for higher accuracy
+                if self.cfg.TEST.AUG.SHIFT_HEATMAP:
+                    probs_scl_hf[:, :, :, 1:] = probs_scl_hf[:, :, :, 0:-1]
+                keypoint_probs.append(probs_scl_hf)
+                kpt_iou_scores.append(outputs_scl_hf['kpt_iou_scores'])
+                aug_idx += 1
+        kpt_iou_scores = torch.stack(kpt_iou_scores, dim=0)
+        kpt_iou_scores = torch.mean(kpt_iou_scores, dim=0)
+        keypoint_probs = torch.stack(keypoint_probs, dim=0)
+        keypoint_probs = torch.mean(keypoint_probs, dim=0)
 
-def parsing_inference(model, features):
-    if 'CIHP' in cfg.TEST.DATASETS[0]:
-        flip_map = ([14, 15], [16, 17], [18, 19])
-    elif 'MHP-v2' in cfg.TEST.DATASETS[0]:
-        flip_map = ([5, 6], [7, 8], [22, 23], [24, 25], [26, 27], [28, 29], [30, 31], [32, 33])
-    elif 'ATR' in cfg.TEST.DATASETS[0]:
-        flip_map = ([9, 10], [12, 13], [14, 15])
-    elif 'LIP' in cfg.TEST.DATASETS[0]:
-        flip_map = ([14, 15], [16, 17], [18, 19])
-    else:
-        flip_map = ()
+        ims_kpts, kpt_pixle_scores = get_keypoints_results(self.cfg, keypoint_probs, targets)
+        boxes_per_image = [len(target) for target in targets]
+        kpt_iou_scores = kpt_iou_scores.split(boxes_per_image, dim=0)
+        kpt_iou_scores = [_.cpu() for _ in kpt_iou_scores]
 
-    _idx = 0
-    size = [cfg.TEST.SCALE[1], cfg.TEST.SCALE[0]]
-    parsing_results = []
-    parsing_scores = []
-    outputs = model.parsing_net(features[_idx])
-    results = outputs['parsings'].cpu().numpy()
-    scores = outputs['parsing_scores']
-    if scores is not None:
-        scores = scores.cpu().numpy()
-    _idx += 1
-    parsing_results.append(results)
-    parsing_scores.append(scores)
-    if cfg.TEST.AUG.H_FLIP:
-        results_hf = model.parsing_net(features[_idx])['parsings'].cpu().numpy()
-        scores_hf = model.parsing_net(features[_idx])['parsing_scores']
-        if scores_hf is not None:
-            scores_hf = scores_hf.cpu().numpy()
-        _idx += 1
-        results_hf = flip_back(results_hf, flip_map)
-        # feature is not aligned, shift flipped heatmap for higher accuracy
-        if cfg.TEST.AUG.SHIFT_HEATMAP:
-            results_hf[:, :, :, 1:] = results_hf[:, :, :, 0:-1]
-        parsing_results.append(results_hf)
-        parsing_scores.append(scores_hf)
+        self.result['keypoints'] = dict(
+            ims_kpts=ims_kpts, kpt_iou_scores=kpt_iou_scores, kpt_pixle_scores=kpt_pixle_scores
+        )
 
-    for scale in cfg.TEST.AUG.SCALES:
-        results_scl = model.parsing_net(features[_idx])['parsings']
-        _idx += 1
-        results_scl = F.interpolate(results_scl, size=size, mode="bilinear", align_corners=False)
-        parsing_results.append(results_scl.cpu().numpy())
-        if cfg.TEST.AUG.H_FLIP:
-            results_scl_hf = model.parsing_net(features[_idx])['parsings']
-            _idx += 1
-            results_scl_hf = F.interpolate(results_scl_hf, size=size, mode="bilinear", align_corners=False)
-            results_scl_hf = flip_back(results_scl_hf.cpu().numpy(), flip_map)
+    def parsing_inference(self, targets):
+        flip_map = self.extra_fields['flip_map'] if 'flip_map' in self.extra_fields else ()
+        parsing_probs = []
+        parsing_iou_scores = []
+        aug_idx = 0
+        size = [self.cfg.TEST.SCALE[1], self.cfg.TEST.SCALE[0]]
+
+        outputs = self.model.parsing_net(self.features[aug_idx])
+        probs = outputs['probs']
+        parsing_probs.append(probs)
+        parsing_iou_scores.append(outputs['parsing_iou_scores'])
+        aug_idx += 1
+
+        if self.cfg.TEST.AUG.H_FLIP:
+            outputs_hf = self.model.parsing_net(self.features[aug_idx])
+            probs_hf = outputs_hf['probs']
+            probs_hf = flip_parsing_prob(probs_hf, flip_map)
             # feature is not aligned, shift flipped heatmap for higher accuracy
-            if cfg.TEST.AUG.SHIFT_HEATMAP:
-                results_scl_hf[:, :, :, 1:] = results_scl_hf[:, :, :, 0:-1]
-            parsing_results.append(results_scl_hf)
+            if self.cfg.TEST.AUG.SHIFT_HEATMAP:
+                probs_hf[:, :, :, 1:] = probs_hf[:, :, :, 0:-1]
+            parsing_probs.append(probs_hf)
+            parsing_iou_scores.append(outputs_hf['parsing_iou_scores'])
+            aug_idx += 1
 
-    parsing_results = np.mean(parsing_results, axis=0)
-    parsing_scores = np.mean(parsing_scores, axis=0) if scores is not None else None
-    return parsing_results, parsing_scores
+        for scale in self.cfg.TEST.AUG.SCALES:
+            outputs_scl = self.model.parsing_net(self.features[aug_idx])
+            probs_scl = F.interpolate(outputs_scl['probs'], size=size, mode="bilinear", align_corners=False)
+            parsing_probs.append(probs_scl)
+            parsing_iou_scores.append(outputs_scl['parsing_iou_scores'])
+            aug_idx += 1
 
+            if self.cfg.TEST.AUG.H_FLIP:
+                outputs_scl_hf = self.model.parsing_net(self.features[aug_idx])
+                probs_scl_hf = F.interpolate(outputs_scl_hf['probs'], size=size, mode="bilinear", align_corners=False)
+                probs_scl_hf = flip_parsing_prob(probs_scl_hf, flip_map)
+                # feature is not aligned, shift flipped heatmap for higher accuracy
+                if self.cfg.TEST.AUG.SHIFT_HEATMAP:
+                    probs_scl_hf[:, :, :, 1:] = probs_scl_hf[:, :, :, 0:-1]
+                parsing_probs.append(probs_scl_hf)
+                parsing_iou_scores.append(outputs_scl_hf['parsing_iou_scores'])
+                aug_idx += 1
+        parsing_iou_scores = torch.stack(parsing_iou_scores, dim=0)
+        parsing_iou_scores = torch.mean(parsing_iou_scores, dim=0)
 
-def uv_inference(model, features):
-    _idx = 0
-    size = [cfg.TEST.SCALE[1], cfg.TEST.SCALE[0]]
-    uv_results = [[], [], [], []]
-    results = model.uv_net(features[_idx])
-    _idx += 1
-    results = [result.cpu().numpy() for result in results]
-    add_uv_results(uv_results, results)
-    if cfg.TEST.AUG.H_FLIP:
-        results_hf = model.uv_net(features[_idx])
-        _idx += 1
-        results_hf = [result.cpu().numpy() for result in results_hf]
-        results_hf = flip_uv_featuremap(results_hf)
-        # feature is not aligned, shift flipped heatmap for higher accuracy
-        if cfg.TEST.AUG.SHIFT_HEATMAP:
-            results_hf[:, :, :, 1:] = results_hf[:, :, :, 0:-1]
-        add_uv_results(uv_results, results_hf)
+        ims_parsings, parsing_instance_pixel_scores, parsing_part_pixel_scores = \
+            get_parsing_results(self.cfg, parsing_probs, targets)
+        boxes_per_image = [len(target) for target in targets]
+        parsing_iou_scores = parsing_iou_scores.split(boxes_per_image, dim=0)
+        parsing_iou_scores = [_.cpu() for _ in parsing_iou_scores]
 
-    for scale in cfg.TEST.AUG.SCALES:
-        results_scl = model.uv_net(features[_idx])
-        _idx += 1
-        results_scl = [F.interpolate(result, size=size, mode="bilinear", align_corners=False)
-                       for result in results_scl]
-        results_scl = [result.cpu().numpy() for result in results_scl]
-        add_uv_results(uv_results, results_scl)
-        if cfg.TEST.AUG.H_FLIP:
-            results_scl_hf = model.uv_net(features[_idx])
-            _idx += 1
-            results_scl_hf = [
-                F.interpolate(result, size=size, mode="bilinear", align_corners=False) for result in results_scl_hf
+        self.result['parsing'] = dict(
+            ims_parsings=ims_parsings, parsing_iou_scores=parsing_iou_scores,
+            parsing_instance_pixel_scores=parsing_instance_pixel_scores,
+            parsing_part_pixel_scores=parsing_part_pixel_scores
+        )
+
+    def uv_inference(self, targets):
+        uv_probs = [[], [], [], []]
+        uv_iou_scores = []
+        aug_idx = 0
+        size = [self.cfg.TEST.SCALE[1], self.cfg.TEST.SCALE[0]]
+
+        outputs = self.model.uv_net(self.features[aug_idx])
+        add_uv_results(uv_probs, outputs['probs'])
+        uv_iou_scores.append(outputs['uv_iou_scores'])
+        aug_idx += 1
+
+        if self.cfg.TEST.AUG.H_FLIP:
+            outputs_hf = self.model.uv_net(self.features[aug_idx])
+            probs_hf = flip_uv_prob(outputs_hf['probs'])
+            add_uv_results(uv_probs, probs_hf)
+            uv_iou_scores.append(outputs_hf['uv_iou_scores'])
+            aug_idx += 1
+
+        for scale in self.cfg.TEST.AUG.SCALES:
+            outputs_scl = self.model.uv_net(self.features[aug_idx])
+            probs_scl = [
+                F.interpolate(prob, size=size, mode="bilinear", align_corners=False) for prob in outputs_scl['probs']
             ]
-            results_scl_hf = [result.cpu().numpy() for result in results_scl_hf]
-            results_scl_hf = flip_uv_featuremap(results_scl_hf)
-            # feature is not aligned, shift flipped heatmap for higher accuracy
-            if cfg.TEST.AUG.SHIFT_HEATMAP:
-                results_scl_hf[:, :, :, 1:] = results_scl_hf[:, :, :, 0:-1]
-            add_uv_results(uv_results, results_scl_hf)
+            add_uv_results(uv_probs, probs_scl)
+            uv_iou_scores.append(outputs_scl['uv_iou_scores'])
+            aug_idx += 1
 
-    _uv_results = []
-    for i in range(4):
-        _uv_results.append(np.mean(uv_results[i], axis=0))
-    return _uv_results
+            if self.cfg.TEST.AUG.H_FLIP:
+                outputs_scl_hf = self.model.uv_net(self.features[aug_idx])
+                probs_scl_hf = [
+                    F.interpolate(prob, size=size, mode="bilinear", align_corners=False)
+                    for prob in outputs_scl_hf['probs']
+                ]
+                probs_scl_hf = flip_uv_prob(probs_scl_hf)
+                add_uv_results(uv_probs, probs_scl_hf)
+                uv_iou_scores.append(outputs_scl_hf['uv_iou_scores'])
+                aug_idx += 1
 
+        _uv_probs = []
+        for i in range(4):
+            probs_ts = torch.stack(uv_probs[i], dim=0)
+            _uv_probs.append(torch.mean(probs_ts, dim=0))
+        uv_iou_scores = torch.stack(uv_iou_scores, dim=0)
+        uv_iou_scores = torch.mean(uv_iou_scores, dim=0)
 
-def qanet_inference(model, features):
-    if 'CIHP' in cfg.TEST.DATASETS[0]:
-        flip_map = ([14, 15], [16, 17], [18, 19])
-    elif 'MHP-v2' in cfg.TEST.DATASETS[0]:
-        flip_map = ([5, 6], [7, 8], [22, 23], [24, 25], [26, 27], [28, 29], [30, 31], [32, 33])
-    elif 'ATR' in cfg.TEST.DATASETS[0]:
-        flip_map = ([9, 10], [12, 13], [14, 15])
-    elif 'LIP' in cfg.TEST.DATASETS[0]:
-        flip_map = ([14, 15], [16, 17], [18, 19])
-    else:
-        flip_map = ()
+        ims_Index_UV, ims_U_uv, ims_V_uv, uv_pixel_scores = get_uv_results(self.cfg, _uv_probs, targets)
+        boxes_per_image = [len(target) for target in targets]
+        uv_iou_scores = uv_iou_scores.split(boxes_per_image, dim=0)
+        uv_iou_scores = [_.cpu() for _ in uv_iou_scores]
 
-    _idx = 0
-    size = [cfg.TEST.SCALE[1], cfg.TEST.SCALE[0]]
-    parsing_results = []
-    parsing_scores = []
-    outputs = model.qanet_net(features[_idx])
-    results = outputs['parsings'].cpu().numpy()
-    scores = outputs['parsing_scores']
-    if scores is not None:
-        scores = scores.cpu().numpy()
-    _idx += 1
-    parsing_results.append(results)
-    parsing_scores.append(scores)
-    if cfg.TEST.AUG.H_FLIP:
-        results_hf = model.qanet_net(features[_idx])['parsings'].cpu().numpy()
-        scores_hf = model.qanet_net(features[_idx])['parsing_scores']
-        if scores_hf is not None:
-            scores_hf = scores_hf.cpu().numpy()
-        _idx += 1
-        results_hf = flip_back(results_hf, flip_map)
-        # feature is not aligned, shift flipped heatmap for higher accuracy
-        if cfg.TEST.AUG.SHIFT_HEATMAP:
-            results_hf[:, :, :, 1:] = results_hf[:, :, :, 0:-1]
-        parsing_results.append(results_hf)
-        parsing_scores.append(scores_hf)
-
-    for scale in cfg.TEST.AUG.SCALES:
-        results_scl = model.qanet_net(features[_idx])['parsings']
-        _idx += 1
-        results_scl = F.interpolate(results_scl, size=size, mode="bilinear", align_corners=False)
-        parsing_results.append(results_scl.cpu().numpy())
-        if cfg.TEST.AUG.H_FLIP:
-            results_scl_hf = model.qanet_net(features[_idx])['parsings']
-            _idx += 1
-            results_scl_hf = F.interpolate(results_scl_hf, size=size, mode="bilinear", align_corners=False)
-            results_scl_hf = flip_back(results_scl_hf.cpu().numpy(), flip_map)
-            # feature is not aligned, shift flipped heatmap for higher accuracy
-            if cfg.TEST.AUG.SHIFT_HEATMAP:
-                results_scl_hf[:, :, :, 1:] = results_scl_hf[:, :, :, 0:-1]
-            parsing_results.append(results_scl_hf)
-
-    parsing_results = np.mean(parsing_results, axis=0)
-    parsing_scores = np.mean(parsing_scores, axis=0) if scores is not None else None
-    return parsing_results, parsing_scores
+        self.result['uv'] = dict(
+            ims_Index_UV=ims_Index_UV, ims_U_uv=ims_U_uv, ims_V_uv=ims_V_uv,
+            uv_iou_scores=uv_iou_scores, uv_pixel_scores=uv_pixel_scores
+        )
 
 
-def im_conv_body_net(model, inputs, scale=None, flip=False):
-    if scale is not None:
-        size = [scale[1], scale[0]]
-        inputs = F.interpolate(inputs, size=size, mode="bilinear", align_corners=False)
-    if flip:
-        inputs = inputs.flip(3)
-    result = model.conv_body_net(inputs)
-    return result
+class PreprocessInputs(object):
+    def __init__(self, cfg):
+        self.cfg = cfg
+        pixel_stds = torch.from_numpy(np.array(cfg.PIXEL_STDS)).float()
+        pixel_means = torch.from_numpy(np.array(cfg.PIXEL_MEANS)).float()
+        self.pixel_stds = pixel_stds.view(1, 3, 1, 1).to(torch.device(self.cfg.DEVICE))
+        self.pixel_means = pixel_means.view(1, 3, 1, 1).to(torch.device(self.cfg.DEVICE))
+
+    def __call__(self, inputs, targets, scale=1.0, flip=False):
+        if self.cfg.TEST.AFFINE_MODE == 'roi_align':
+            inputs = [torch.from_numpy(_.transpose(2, 0, 1)).float() for _ in inputs]
+            inputs = to_image_list(inputs, 0).to(torch.device(self.cfg.DEVICE))
+            rois = []
+            for i, target in enumerate(targets):
+                box = target.bbox.clone()
+                box[:, 2:4] *= scale
+                batch_inds = torch.ones(len(box), device=box.device).to(dtype=box.dtype)[:, None] * i
+                rois.append(torch.cat([batch_inds, box], dim=1))
+            rois = torch.cat(rois).to(torch.device(self.cfg.DEVICE))
+            if len(rois) == 0:
+                return None
+            inputs = (
+                roi_align_rotated(inputs.tensors, rois, (self.cfg.TEST.SCALE[1], self.cfg.TEST.SCALE[0]), 1.0, 0, True)
+            )
+        elif self.cfg.TEST.AFFINE_MODE == 'cv2':
+            assert scale == 1, 'cv2 only supports single scale'
+            inputs = list(inputs)
+            inputs = [_ for _ in inputs if len(_) > 0]
+            if len(inputs) == 0:
+                return None
+            inputs = torch.cat(inputs, dim=0).to(torch.device(self.cfg.DEVICE)).float()
+        inputs = (inputs / 255. - self.pixel_means) / self.pixel_stds
+        if flip:
+            inputs = inputs.flip(3)
+
+        return inputs
 
 
 def add_uv_results(all_results, results):
     for i in range(4):
         all_results[i].append(results[i])
-
-
-def post_processing(result, targets, val_set):
-    c = targets['center'].numpy()
-    s = targets['scale'].numpy()
-    image_id = targets['image_id'].numpy()
-    boxes = targets['bbox'].numpy()
-    score = targets['score'].numpy()
-    im_per_batch = image_id.shape[0]
-    ins_info = np.zeros((im_per_batch, 10))
-    image_info = [(entry['height'], entry['width']) for entry in val_set.coco.loadImgs(image_id)]
-
-    # double check this all_boxes parts
-    ins_info[:, 0] = image_id
-    ins_info[:, 1] = score
-    ins_info[:, 2] = np.prod(s * 200, 1)
-
-    if 'mask_class' in targets.keys():
-        classes = targets['mask_class'].numpy().astype(np.int)
-        ins_info[:, 3] = classes
-    else:
-        classes = np.ones(im_per_batch).astype(np.int)
-        ins_info[:, 3] = classes
-
-    boxes_xyxy = xywh_to_xyxy(boxes)
-    boxes_score = np.hstack((boxes_xyxy, score[:, np.newaxis])).astype(np.float32, copy=False)
-
-    masks = []
-    keyps = []
-    parss = []
-    uvs = []
-    if cfg.MODEL.MASK_ON:
-        masks = masks_results(result['mask'], image_info, c, s, classes)
-
-    if cfg.MODEL.KEYPOINT_ON:
-        keyps = np.zeros((im_per_batch, cfg.KEYPOINT.NUM_JOINTS, 3), dtype=np.float32)
-        preds, maxvals = get_final_preds(result['keypoints'], c, s)
-        keyps[:, :, 0:2] = preds[:, :, 0:2]
-        keyps[:, :, 2:3] = maxvals
-        keyps = list(keyps)
-
-    if cfg.MODEL.PARSING_ON:
-        parss, pars_scores = parsing_results(result['parsing'], image_info, c, s)
-        if result['parsing_score'] is None:
-            ins_info[:, 9] = pars_scores
-        else:
-            ins_info[:, 9] = result['parsing_score']
-
-    if cfg.MODEL.UV_ON:
-        uvs, uv_scores = uvs_results(result['uv'], image_info, boxes, c, s)
-        ins_info[:, 4:8] = boxes
-        ins_info[:, 8] = uv_scores
-
-    if cfg.MODEL.QANET_ON:
-        parss, pars_scores = qanet_results(result['parsing'], image_info, c, s)
-        if result['parsing_score'] is None:
-            ins_info[:, 9] = pars_scores
-        else:
-            ins_info[:, 9] = result['parsing_score']
-
-    ins_info = list(ins_info)
-
-    return ins_info, boxes_score, classes, masks, keyps, parss, uvs

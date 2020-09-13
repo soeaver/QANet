@@ -1,90 +1,81 @@
-import torch
 from torch import nn
-from torch.nn import functional as F
 
-from models.ops import NonLocal2d
+from lib.layers import make_conv, make_norm, make_act, ASPP, NonLocal2d
 from instance.modeling import registry
-from instance.core.config import cfg
-from utils.net import make_conv
 
 
 @registry.UV_HEADS.register("gce_head")
-class gce_head(nn.Module):
-    def __init__(self, dim_in):
-        super(gce_head, self).__init__()
+class GCEHead(nn.Module):
+    def __init__(self, cfg, dim_in, spatial_scale):
+        super(GCEHead, self).__init__()
         self.dim_in = dim_in[-1]
 
         use_nl = cfg.UV.GCE_HEAD.USE_NL
-        use_bn = cfg.UV.GCE_HEAD.USE_BN
-        use_gn = cfg.UV.GCE_HEAD.USE_GN
+        norm = cfg.UV.GCE_HEAD.NORM
         conv_dim = cfg.UV.GCE_HEAD.CONV_DIM
-        asppv3_dim = cfg.UV.GCE_HEAD.ASPPV3_DIM
-        num_convs_before_asppv3 = cfg.UV.GCE_HEAD.NUM_CONVS_BEFORE_ASPPV3
-        asppv3_dilation = cfg.UV.GCE_HEAD.ASPPV3_DILATION
-        num_convs_after_asppv3 = cfg.UV.GCE_HEAD.NUM_CONVS_AFTER_ASPPV3
+        aspp_dim = cfg.UV.GCE_HEAD.ASPP_DIM
+        num_convs_before_aspp = cfg.UV.GCE_HEAD.NUM_CONVS_BEFORE_ASPP
+        aspp_dilation = cfg.UV.GCE_HEAD.ASPP_DILATION
+        num_convs_after_aspp = cfg.UV.GCE_HEAD.NUM_CONVS_AFTER_ASPP
 
-        # convx before asppv3 module
-        before_asppv3_list = []
-        for _ in range(num_convs_before_asppv3):
-            before_asppv3_list.append(
-                make_conv(self.dim_in, conv_dim, kernel=3, stride=1, use_bn=use_bn, use_gn=use_gn, use_relu=True)
+        # convx before aspp
+        before_aspp_list = []
+        for _ in range(num_convs_before_aspp):
+            before_aspp_list.append(
+                make_conv(self.dim_in, conv_dim, kernel_size=3, norm=make_norm(conv_dim, norm=norm), act=make_act())
             )
             self.dim_in = conv_dim
-        self.conv_before_asppv3 = nn.Sequential(*before_asppv3_list) if len(before_asppv3_list) else None
+        self.conv_before_aspp = nn.Sequential(*before_aspp_list) if len(before_aspp_list) else None
 
-        # asppv3 module
-        self.asppv3 = []
-        self.asppv3.append(
-            make_conv(self.dim_in, asppv3_dim, kernel=1, use_bn=use_bn, use_gn=use_gn, use_relu=True)
-        )
-        for dilation in asppv3_dilation:
-            self.asppv3.append(
-                make_conv(self.dim_in, asppv3_dim, kernel=3, dilation=dilation, use_bn=use_bn, use_gn=use_gn,
-                          use_relu=True)
-            )
-        self.asppv3 = nn.ModuleList(self.asppv3)
-        self.im_pool = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            make_conv(self.dim_in, asppv3_dim, kernel=1, use_bn=use_bn, use_gn=use_gn, use_relu=True)
-        )
-        self.dim_in = (len(asppv3_dilation) + 2) * asppv3_dim
+        # aspp
+        self.aspp = ASPP(self.dim_in, aspp_dim, dilations=aspp_dilation, norm=norm)
+        self.dim_in = self.aspp.dim_out
 
-        feat_list = []
-        feat_list.append(
-            make_conv(self.dim_in, conv_dim, kernel=1, use_bn=use_bn, use_gn=use_gn, use_relu=True)
-        )
+        feat_list = [
+            make_conv(self.dim_in, conv_dim, kernel_size=1, norm=make_norm(conv_dim, norm=norm), act=make_act())
+        ]
+        # non-local
         if use_nl:
             feat_list.append(
-                NonLocal2d(conv_dim, int(conv_dim * cfg.UV.GCE_HEAD.NL_RATIO), conv_dim, use_gn=True)
+                NonLocal2d(conv_dim, int(conv_dim * cfg.KRCNN.GCE_HEAD.NL_RATIO), conv_dim, use_gn=True)
             )
         self.feat = nn.Sequential(*feat_list)
         self.dim_in = conv_dim
 
-        # convx after asppv3 module
-        assert num_convs_after_asppv3 >= 1
-        after_asppv3_list = []
-        for _ in range(num_convs_after_asppv3):
-            after_asppv3_list.append(
-                make_conv(self.dim_in, conv_dim, kernel=3, use_bn=use_bn, use_gn=use_gn, use_relu=True)
+        # convx after aspp
+        assert num_convs_after_aspp >= 1
+        after_aspp_list = []
+        for _ in range(num_convs_after_aspp):
+            after_aspp_list.append(
+                make_conv(self.dim_in, conv_dim, kernel_size=3, norm=make_norm(conv_dim, norm=norm), act=make_act())
             )
             self.dim_in = conv_dim
-        self.conv_after_asppv3 = nn.Sequential(*after_asppv3_list) if len(after_asppv3_list) else None
+        self.conv_after_aspp = nn.Sequential(*after_aspp_list) if len(after_aspp_list) else None
         self.dim_out = self.dim_in
+        self.spatial_scale = spatial_scale
+
+        self._init_weights()
+
+    def _init_weights(self):
+        # weight initialization
+        for m in self.modules():
+            if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d)):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity="relu")
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.normal_(m.weight, 0, 0.01)
+                nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
-        x_out = x[-1]
-        input_size = x_out.size()
-
-        if self.conv_before_asppv3 is not None:
-            x_out = self.conv_before_asppv3(x_out)
-
-        asppv3_out = [F.interpolate(self.im_pool(x_out), (input_size[2], input_size[3]),
-                                    mode="bilinear", align_corners=False)]
-        for i in range(len(self.asppv3)):
-            asppv3_out.append(self.asppv3[i](x_out))
-        asppv3_out = torch.cat(asppv3_out, 1)
-        asppv3_out = self.feat(asppv3_out)
-
-        if self.conv_after_asppv3 is not None:
-            asppv3_out = self.conv_after_asppv3(asppv3_out)
-        return asppv3_out
+        x = x[-1]
+        if self.conv_before_aspp is not None:
+            x = self.conv_before_aspp(x)
+        x = self.aspp(x)
+        x = self.feat(x)
+        if self.conv_after_aspp is not None:
+            x = self.conv_after_aspp(x)
+        return x

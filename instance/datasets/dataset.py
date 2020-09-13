@@ -2,15 +2,18 @@ import os
 
 import torch.utils.data
 
-from utils.data import datasets as D
-from utils.data import samplers
-from utils.misc import logging_rank
-from instance.datasets import build_transforms
-from instance.datasets.dataset_catalog import contains, get_im_dir, get_ann_fn
-from instance.core.config import cfg
+from lib.datasets.datasets.coco_instance import COCOInstanceDataset, COCOInstanceTestDataset
+from lib.datasets.datasets.concat_dataset import ConcatDataset
+from lib.datasets import samplers
+from lib.datasets.collate_batch import BatchCollator
+from lib.utils.misc import logging_rank
+from lib.utils.comm import get_world_size
+from instance.datasets.transform import build_transforms
+from instance.datasets.dataset_catalog import contains, get_im_dir, get_ann_fn, get_extra_fields
 
 
-def build_dataset(dataset_list, is_train=True, local_rank=0):
+def build_dataset(cfg, is_train=True):
+    dataset_list = cfg.TRAIN.DATASETS if is_train else cfg.TEST.DATASETS
     if not isinstance(dataset_list, (list, tuple)):
         raise RuntimeError(
             "dataset_list should be a list of strings, got {}".format(dataset_list)
@@ -18,9 +21,9 @@ def build_dataset(dataset_list, is_train=True, local_rank=0):
     for dataset_name in dataset_list:
         assert contains(dataset_name), 'Unknown dataset name: {}'.format(dataset_name)
         assert os.path.exists(get_im_dir(dataset_name)), 'Im dir \'{}\' not found'.format(get_im_dir(dataset_name))
-        logging_rank('Creating: {}'.format(dataset_name), local_rank=local_rank)
+        logging_rank('Creating: {}'.format(dataset_name))
 
-    transforms = build_transforms(is_train)
+    transforms = build_transforms(cfg, is_train)
     datasets = []
     for dataset_name in dataset_list:
         args = {}
@@ -28,18 +31,25 @@ def build_dataset(dataset_list, is_train=True, local_rank=0):
         args['ann_file'] = get_ann_fn(dataset_name)
         args['bbox_file'] = cfg.TEST.INSTANCE_BBOX_FILE
         args['image_thresh'] = cfg.TEST.IMAGE_THRESH
+        extra_fields = get_extra_fields(dataset_name)
         ann_types = ()
         if cfg.MODEL.MASK_ON:
             ann_types = ann_types + ('mask',)
+            extra_fields.update(dict(mask_format=cfg.DATALOADER.GT_FORMAT.MASK))
         if cfg.MODEL.KEYPOINT_ON:
             ann_types = ann_types + ('keypoints',)
-        if cfg.MODEL.PARSING_ON or cfg.MODEL.QANET_ON:
+        if cfg.MODEL.PARSING_ON:
             ann_types = ann_types + ('parsing',)
+            extra_fields.update(dict(semseg_format=cfg.DATALOADER.GT_FORMAT.SEMSEG))
         if cfg.MODEL.UV_ON:
             ann_types = ann_types + ('uv',)
         args['ann_types'] = ann_types
         args["transforms"] = transforms
-        dataset = D.COCOInstanceDataset(**args)
+        args['extra_fields'] = extra_fields
+        if is_train:
+            dataset = COCOInstanceDataset(**args)
+        else:
+            dataset = COCOInstanceTestDataset(**args)
         datasets.append(dataset)
 
     # for training, concatenate all datasets into a single one
@@ -50,7 +60,16 @@ def build_dataset(dataset_list, is_train=True, local_rank=0):
     return dataset
 
 
-def make_train_data_loader(datasets, ims_per_gpu, train_sampler):
+def make_data_sampler(cfg, datasets, shuffle=True):
+    if cfg.DATALOADER.SAMPLER_TRAIN == "RepeatFactorInstanceTrainingSampler":
+        return samplers.RepeatFactorInstanceTrainingSampler(datasets, cfg.DATALOADER.RFTSAMPLER, shuffle=shuffle)
+    else:
+        return torch.utils.data.distributed.DistributedSampler(datasets, shuffle=shuffle)
+
+
+def make_train_data_loader(cfg, datasets, train_sampler):
+    num_gpus = get_world_size()
+    ims_per_gpu = int(cfg.TRAIN.BATCH_SIZE / num_gpus)
     num_workers = cfg.TRAIN.LOADER_THREADS
     data_loader = torch.utils.data.DataLoader(
         datasets,
@@ -65,20 +84,18 @@ def make_train_data_loader(datasets, ims_per_gpu, train_sampler):
     return data_loader
 
 
-def make_test_data_loader(datasets, start_ind, end_ind, is_distributed=True):
+def make_test_data_loader(cfg, datasets):
     ims_per_gpu = cfg.TEST.IMS_PER_GPU
-    if start_ind == -1 or end_ind == -1:
-        test_sampler = torch.utils.data.distributed.DistributedSampler(datasets) if is_distributed else None
-    else:
-        test_sampler = samplers.RangeSampler(start_ind, end_ind)
+    test_sampler = torch.utils.data.distributed.DistributedSampler(datasets)
     num_workers = cfg.TEST.LOADER_THREADS
+    collator = BatchCollator(-1)
     data_loader = torch.utils.data.DataLoader(
         datasets,
         batch_size=ims_per_gpu,
         shuffle=False,
         sampler=test_sampler,
         num_workers=num_workers,
-        pin_memory=True
+        collate_fn=collator,
     )
 
     return data_loader

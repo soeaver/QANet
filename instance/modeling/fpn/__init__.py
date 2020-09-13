@@ -1,4 +1,4 @@
 from .FPN import *
-from .NASFPN import *
+from .LatentEncode import *
 from .PFPN import *
 from .Xdeconv import *

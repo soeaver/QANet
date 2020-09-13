@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
 
+from lib.layers import make_norm
 from instance.modeling import registry
-from instance.core.config import cfg
 
 
 @registry.FPN_BODY.register("xdeconv")
-class xdeconv(nn.Module):
-    def __init__(self, dim_in, spatial_scale):
+class XDeConv(nn.Module):
+    def __init__(self, cfg, dim_in, spatial_scale):
         super().__init__()
         self.dim_in = dim_in[-1]
         self.spatial_scale = spatial_scale[-1]
@@ -18,6 +18,7 @@ class xdeconv(nn.Module):
         padding, output_padding = self._get_deconv_param()
         deconv_with_bias = cfg.FPN.DECONVX.WITH_BIAS
         num_deconvs = cfg.FPN.DECONVX.NUM_DECONVS
+        norm = cfg.FPN.DECONVX.NORM
 
         # deconv module
         deconv_list = []
@@ -25,7 +26,7 @@ class xdeconv(nn.Module):
             deconv_list.extend([
                 nn.ConvTranspose2d(self.dim_in, hidden_dim, kernel_size=self.deconv_kernel, stride=2,
                                    padding=padding, output_padding=output_padding, bias=deconv_with_bias),
-                nn.BatchNorm2d(hidden_dim),
+                make_norm(hidden_dim, norm=norm),
                 nn.ReLU(inplace=True)
             ])
             self.dim_in = hidden_dim

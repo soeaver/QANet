@@ -1,17 +1,19 @@
 from torch import nn
 
 from instance.modeling import registry
-from instance.core.config import cfg
 
 
 @registry.PARSINGIOU_OUTPUTS.register("linear_output")
-class ParsingIoU_output(nn.Module):
-    def __init__(self, dim_in):
-        super(ParsingIoU_output, self).__init__()
+class ParsingIoUOutput(nn.Module):
+    def __init__(self, cfg, dim_in):
+        super(ParsingIoUOutput, self).__init__()
         num_classes = 1
 
         self.parsingiou = nn.Linear(dim_in, num_classes)
 
+        self._init_weights()
+
+    def _init_weights(self):
         nn.init.normal_(self.parsingiou.weight, mean=0, std=0.01)
         nn.init.constant_(self.parsingiou.bias, 0)
 

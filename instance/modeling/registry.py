@@ -29,6 +29,8 @@ PARSING_HEADS = Registry()
 PARSING_OUTPUTS = Registry()
 PARSINGIOU_HEADS = Registry()
 PARSINGIOU_OUTPUTS = Registry()
+QUALITY_HEADS = Registry()
+QUALITY_OUTPUTS = Registry()
 
 # UV Head
 UV_HEADS = Registry()

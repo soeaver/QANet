@@ -5,6 +5,7 @@ from instance.modeling.parsing_head import heads
 from instance.modeling.parsing_head import outputs
 from instance.modeling.parsing_head.loss import parsing_loss_evaluator
 from instance.modeling.parsing_head.parsingiou.parsingiou import ParsingIoU
+from instance.modeling.parsing_head.quality.quality import Quality
 from instance.modeling import registry
 
 
@@ -13,6 +14,11 @@ class Parsing(torch.nn.Module):
         super(Parsing, self).__init__()
         self.spatial_scale = spatial_scale
         self.parsingiou_on = cfg.PARSING.PARSINGIOU_ON
+        self.quality_on = cfg.PARSING.QUALITY_ON
+
+        if self.quality_on:
+            self.Quality = Quality(cfg, dim_in, self.spatial_scale)
+            dim_in = self.Quality.dim_out
 
         head = registry.PARSING_HEADS[cfg.PARSING.PARSING_HEAD]
         self.Head = head(cfg, dim_in, self.spatial_scale)
@@ -31,26 +37,39 @@ class Parsing(torch.nn.Module):
             return self._forward_test(conv_features, targets)
 
     def _forward_train(self, conv_features, targets=None):
+        losses = dict()
+
+        if self.quality_on:
+            loss_quality, conv_features = self.Quality(conv_features, targets['parsing'])
+            losses.update(loss_quality)
+
         parsing_feat = self.Head(conv_features)
         parsing_logits = self.Output(parsing_feat)
 
+        loss_parsing, parsingiou_targets = self.loss_evaluator(parsing_logits, targets['parsing'])
+        losses.update(dict(loss_parsing=loss_parsing))
+
         if self.parsingiou_on:
-            loss_parsing, parsingiou_targets = self.loss_evaluator(parsing_logits, targets['parsing'])
             loss_parsingiou, _ = self.ParsingIoU(parsing_feat, parsing_logits, parsingiou_targets)
-            return None, dict(loss_parsing=loss_parsing, loss_parsingiou=loss_parsingiou)
-        else:
-            loss_parsing = self.loss_evaluator(parsing_logits, targets['parsing'])
-            return None, dict(loss_parsing=loss_parsing)
+            losses.update(dict(loss_parsingiou=loss_parsingiou))
+
+        return None, losses
 
     def _forward_test(self, conv_features, targets=None):
+        if self.quality_on:
+            _, conv_features = self.Quality(conv_features, None)
+
         parsing_feat = self.Head(conv_features)
         parsing_logits = self.Output(parsing_feat)
 
         output = F.softmax(parsing_logits, dim=1)
+        results = dict(
+            probs=output,
+            parsing_iou_scores=torch.ones(output.size()[0], dtype=torch.float32, device=output.device)
+        )
 
         if self.parsingiou_on:
             _, parsingiou = self.ParsingIoU(parsing_feat, parsing_logits, None)
-            return dict(probs=output, parsing_iou_scores=parsingiou.squeeze(1)), {}
-        else:
-            return dict(probs=output, parsing_iou_scores=torch.ones(output.size()[0], dtype=torch.float32,
-                                                                    device=output.device)), {}
+            results.update(dict(parsing_iou_scores=parsingiou.squeeze(1)))
+
+        return results, {}

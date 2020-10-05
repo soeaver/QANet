@@ -816,6 +816,9 @@ _C.PARSING.LOVASZ_LOSS_WEIGHT = 0.0
 # Use Parsing IoU for Parsing head
 _C.PARSING.PARSINGIOU_ON = False
 
+# Use Quality for Parsing head
+_C.PARSING.QUALITY_ON = False
+
 # Parsing evaluating metrics to use
 # (e.g., "mIoU", "APp", "APr")
 _C.PARSING.METRICS = ['mIoU', 'APp', 'APr']
@@ -896,6 +899,55 @@ _C.PARSING.PARSINGIOU.NORM = ''
 
 # Loss weight for Parsing IoU head
 _C.PARSING.PARSINGIOU.LOSS_WEIGHT = 1.0
+
+# ---------------------------------------------------------------------------- #
+# Quality options
+# ---------------------------------------------------------------------------- #
+_C.PARSING.QUALITY = CN()
+
+# The head of Quality to use
+# (e.g., "convx_head")
+_C.PARSING.QUALITY.QUALITY_HEAD = "quality_head"
+
+# Output module of Quality head
+_C.PARSING.QUALITY.QUALITY_OUTPUT = "quality_output"
+
+# Number of share Conv layers in the Parsing R-CNN decouple convx head
+_C.PARSING.QUALITY.NUM_SHARE_CONVS = 2
+
+# Number of parsing Conv layers in the Parsing R-CNN decouple convx head
+_C.PARSING.QUALITY.NUM_PARSING_CONVS = 1
+
+# Number of mask Conv layers in the Parsing R-CNN decouple convx head
+_C.PARSING.QUALITY.NUM_IOU_CONVS = 2
+
+# Hidden Conv layer dimension of Quality head
+_C.PARSING.QUALITY.PARSING_CONV_DIM = 128
+
+# Hidden MLP layer dimension of Quality head
+_C.PARSING.QUALITY.IOU_CONV_DIM = 512
+
+# Type of normalization in the Quality head
+# E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
+_C.PARSING.QUALITY.NORM = ''
+
+# Middle conv dim in quality module
+_C.PARSING.QUALITY.QUALITY_DIM = 256
+
+# Whether or not use input dim as quality module output feature dim
+_C.PARSING.QUALITY.KEEP_DIM = False
+
+# If KEEP_DIM = False use OUTPUT_DIM as quality module output feature dim, else use input dim as output feature dim
+_C.PARSING.QUALITY.OUTPUT_DIM = 512
+
+# Parsing loss weight for Quality head
+_C.PARSING.QUALITY.PARSING_LOSS_WEIGHT = 0.5
+
+# Lovasz loss for Quality head
+_C.PARSING.QUALITY.LOVASZ_LOSS_WEIGHT = 0.0
+
+# IoU loss weight for Quality head
+_C.PARSING.QUALITY.IOU_LOSS_WEIGHT = 0.5
 
 
 # ---------------------------------------------------------------------------- #

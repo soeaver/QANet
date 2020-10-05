@@ -40,6 +40,8 @@ class ParsingLossComputation(object):
                 parsing_iou = cal_one_mean_iou(parsing_targets_np[_], pred_parsings_np[_], self.num_parsing)
                 parsingiou_targets[_] = np.nanmean(parsing_iou)
             parsingiou_targets = torch.from_numpy(parsingiou_targets).to(self.device, dtype=torch.float)
+        else:
+            parsingiou_targets = None
 
         parsing_targets = parsing_targets.to(self.device)
         parsing_loss = F.cross_entropy(parsing_logits, parsing_targets)
@@ -50,10 +52,7 @@ class ParsingLossComputation(object):
             lovasz_loss *= self.lovasz_loss_weight
             parsing_loss += lovasz_loss
 
-        if not self.parsingiou_on:
-            return parsing_loss
-        else:
-            return parsing_loss, parsingiou_targets
+        return parsing_loss, parsingiou_targets
 
 
 def parsing_loss_evaluator(cfg):

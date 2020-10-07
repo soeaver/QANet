@@ -27,6 +27,7 @@ class ParsingLossComputation(object):
         self.num_parsing = cfg.PARSING.NUM_PARSING
         self.loss_weight = cfg.PARSING.LOSS_WEIGHT
         self.lovasz_loss_weight = cfg.PARSING.LOVASZ_LOSS_WEIGHT
+        self.use_cla_iou = cfg.PARSING.PARSINGIOU.USE_CLA_IOU
 
     def __call__(self, parsing_logits, parsing_targets):
         if self.parsingiou_on:
@@ -34,11 +35,17 @@ class ParsingLossComputation(object):
             parsing_targets_np = parsing_targets.cpu().numpy()
 
             N = parsing_targets_np.shape[0]
-            parsingiou_targets = np.zeros(N, dtype=np.float)
+            if self.use_cla_iou:
+                parsingiou_targets = np.zeros((N, self.num_parsing), dtype=np.float)
+            else:
+                parsingiou_targets = np.zeros(N, dtype=np.float)
 
             for _ in range(N):
                 parsing_iou = cal_one_mean_iou(parsing_targets_np[_], pred_parsings_np[_], self.num_parsing)
-                parsingiou_targets[_] = np.nanmean(parsing_iou)
+                if self.use_cla_iou:
+                    parsingiou_targets[_] = np.nan_to_num(parsing_iou)
+                else:
+                    parsingiou_targets[_] = np.nanmean(parsing_iou)
             parsingiou_targets = torch.from_numpy(parsingiou_targets).to(self.device, dtype=torch.float)
         else:
             parsingiou_targets = None

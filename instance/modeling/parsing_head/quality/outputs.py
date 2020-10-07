@@ -34,7 +34,6 @@ class QualityOutput(nn.Module):
         xp, xi = x
 
         xp = self.parsing_score(xp)
-        # up_scale = int(1 / self.spatial_scale_p)
         up_scale = 1
         if up_scale > 1:
             xp = F.interpolate(xp, scale_factor=up_scale, mode="bilinear", align_corners=False)

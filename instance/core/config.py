@@ -879,19 +879,19 @@ _C.PARSING.PARSINGIOU = CN()
 
 # The head of Parsing IoU to use
 # (e.g., "convx_head")
-_C.PARSING.PARSINGIOU.PARSINGIOU_HEAD = "convx_head"
+_C.PARSING.PARSINGIOU.PARSINGIOU_HEAD = "parsingiou_head"
 
 # Output module of Parsing IoU head
-_C.PARSING.PARSINGIOU.PARSINGIOU_OUTPUT = "linear_output"
+_C.PARSING.PARSINGIOU.PARSINGIOU_OUTPUT = "parsingiou_output"
+
+# Use class-aware iou as targets
+_C.PARSING.PARSINGIOU.USE_CLA_IOU = False
 
 # Number of stacked Conv layers in Parsing IoU head
-_C.PARSING.PARSINGIOU.NUM_STACKED_CONVS = 2
+_C.PARSING.PARSINGIOU.NUM_CONVS = 2
 
 # Hidden Conv layer dimension of Parsing IoU head
-_C.PARSING.PARSINGIOU.CONV_DIM = 64
-
-# Hidden MLP layer dimension of Parsing IoU head
-_C.PARSING.PARSINGIOU.MLP_DIM = 128
+_C.PARSING.PARSINGIOU.CONV_DIM = 512
 
 # Type of normalization in the PARSING IoU head
 # E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...

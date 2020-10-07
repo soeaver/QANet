@@ -50,7 +50,7 @@ class Parsing(torch.nn.Module):
         losses.update(dict(loss_parsing=loss_parsing))
 
         if self.parsingiou_on:
-            loss_parsingiou, _ = self.ParsingIoU(parsing_feat, parsing_logits, parsingiou_targets)
+            loss_parsingiou, _ = self.ParsingIoU(parsing_feat, parsingiou_targets)
             losses.update(dict(loss_parsingiou=loss_parsingiou))
 
         return None, losses
@@ -69,7 +69,7 @@ class Parsing(torch.nn.Module):
         )
 
         if self.parsingiou_on:
-            _, parsingiou = self.ParsingIoU(parsing_feat, parsing_logits, None)
+            _, parsingiou = self.ParsingIoU(parsing_feat, None)
             results.update(dict(parsing_iou_scores=parsingiou.squeeze(1)))
 
         return results, {}

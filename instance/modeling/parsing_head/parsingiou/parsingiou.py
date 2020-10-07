@@ -20,11 +20,10 @@ class ParsingIoU(torch.nn.Module):
 
         self.loss_evaluator = parsingiou_loss_evaluator(cfg)
 
-    def forward(self, features, parsing_logits, parsingiou_targets=None):
+    def forward(self, features, parsingiou_targets=None):
         """
         Arguments:
             features (Tensor): feature-maps from possibly several levels
-            parsing_logits (Tensor): targeted parsing
             parsingiou_targets (Tensor, optional): the ground-truth parsingiou targets.
 
         Returns:
@@ -32,17 +31,17 @@ class ParsingIoU(torch.nn.Module):
                 head. During testing, returns an empty dict.
             parsingiou_pre (Tensor): during training, returns None. During testing, the predicted parsingiou.
         """
-        x = self.Head(features, parsing_logits)
-        parsingiou_pre = self.Output(x)
+        x = self.Head(features)
+        parsingiou_pred = self.Output(x)
 
         if self.training:
-            return self._forward_train(parsingiou_pre, parsingiou_targets)
+            return self._forward_train(parsingiou_pred, parsingiou_targets)
         else:
-            return self._forward_test(parsingiou_pre)
+            return self._forward_test(parsingiou_pred)
 
-    def _forward_train(self, parsingiou_pre, parsingiou_targets=None):
-        loss_parsingiou = self.loss_evaluator(parsingiou_pre, parsingiou_targets)
+    def _forward_train(self, parsingiou_pred, parsingiou_targets=None):
+        loss_parsingiou = self.loss_evaluator(parsingiou_pred, parsingiou_targets)
         return loss_parsingiou, None
 
-    def _forward_test(self, parsingiou_pre):
-        return {}, parsingiou_pre
+    def _forward_test(self, parsingiou_pred):
+        return {}, parsingiou_pred

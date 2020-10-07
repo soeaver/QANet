@@ -1,0 +1,48 @@
+# compilation and distribution
+__pycache__
+_ext
+*.pyc
+*.so
+.Python
+build/
+dist/
+develop-eggs/
+eggs/
+.eggs/
+*.egg
+*.egg-info/
+
+# pytorch/python/numpy formats
+*.pth
+*.pkl
+*.npy
+
+# ipython/jupyter notebooks
+*.ipynb
+**/.ipynb_checkpoints/
+
+# Editor temporaries
+*.swn
+*.swo
+*.swp
+*~
+
+# Pycharm editor settings
+.idea
+
+# VS Code editor settings
+.vscode
+
+# project dirs
+/ckpts/*
+/data/*
+/weights/*
+
+# environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/

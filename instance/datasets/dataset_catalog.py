@@ -30,30 +30,6 @@ _DATASETS = {
             _DATA_DIR + '/ATR/annotations/ATR_val.json',
         _FIELDS:
             {'flip_map': ([9, 10], [12, 13], [14, 15])},
-    },
-    'LIP_train': {
-        _IM_DIR:
-            _DATA_DIR + '/LIP/train_img',
-        _ANN_FN:
-            _DATA_DIR + '/LIP/annotations/LIP_train.json',
-        _FIELDS:
-            {'flip_map': ([9, 10], [12, 13], [14, 15])},
-    },
-    'LIP_val': {
-        _IM_DIR:
-            _DATA_DIR + '/LIP/val_img',
-        _ANN_FN:
-            _DATA_DIR + '/LIP/annotations/LIP_val.json',
-        _FIELDS:
-            {'flip_map': ([14, 15], [16, 17], [18, 19])},
-    },
-    'LIP_test': {
-        _IM_DIR:
-            _DATA_DIR + '/LIP/val_img',
-        _ANN_FN:
-            _DATA_DIR + '/LIP/annotations/LIP_test.json',
-        _FIELDS:
-            {'flip_map': ([14, 15], [16, 17], [18, 19])},
     }
 }
 _DATASETS.update(COMMON_DATASETS)

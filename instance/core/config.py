@@ -30,7 +30,7 @@ _C.PIXEL_STDS = [1.0, 1.0, 1.0]
 _C.CLEAN_UP = True
 
 # Set True to enable model analysis
-_C.MODEL_ANALYSE = True
+_C.MODEL_ANALYSE = False
 
 # Directory for saving checkpoints and loggers
 _C.CKPT = 'ckpts/mscoco/simple_R-50-1x64d-D3K4C256_256x192_adam_1x'

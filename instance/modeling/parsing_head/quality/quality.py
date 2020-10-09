@@ -68,7 +68,7 @@ class QualityEncoder(torch.nn.Module):
         iou_quality = torch.matmul(feat_key, iou_query).permute(0, 2, 1).view(b, 1, h, w)
         # [b, 1, h, w] -> [b, q_dim, h, w] -> [b, q_dim, hw]
         iou_quality = self.iou_quality(iou_quality).view(b, self.q_dim, -1)
-        # iou_quality = F.softmax(iou_quality, dim=-1)
+        # iou_quality = F.softmax(iou_quality, dim=1)
 
         # [b, q_dim, q_dim] * [b, q_dim, hw] -> [b, q_dim, hw] -> [b, q_dim, h, w]
         quality_feat = torch.matmul(prob_quality, iou_quality).view(b, self.q_dim, h, w)

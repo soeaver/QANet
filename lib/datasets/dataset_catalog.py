@@ -184,30 +184,30 @@ COMMON_DATASETS = {
         _FIELDS:
             {'flip_map': ([14, 15], [16, 17], [18, 19])},
     },
-    'VIP_Fine_train': {  # new addition by soeaver
-        _IM_DIR:
-            _DATA_DIR + '/ATEN/VIP_Fine/train_img',
-        _ANN_FN:
-            _DATA_DIR + '/ATEN/VIP_Fine/annotations/VIP_Fine_train.json',
-        _FIELDS:
-            {'flip_map': ([14, 15], [16, 17], [18, 19])},
-    },
-    'VIP_Fine_val': {  # new addition by soeaver
-        _IM_DIR:
-            _DATA_DIR + '/ATEN/VIP_Fine/val_img',
-        _ANN_FN:
-            _DATA_DIR + '/ATEN/VIP_Fine/annotations/VIP_Fine_val.json',
-        _FIELDS:
-            {'flip_map': ([14, 15], [16, 17], [18, 19])},
-    },
-    'VIP_Fine_test': {  # new addition by soeaver
-        _IM_DIR:
-            _DATA_DIR + '/ATEN/VIP_Fine/test_img',
-        _ANN_FN:
-            _DATA_DIR + '/ATEN/VIP_Fine/annotations/VIP_Fine_test.json',
-        _FIELDS:
-            {'flip_map': ([14, 15], [16, 17], [18, 19])},
-    },
+    # 'VIP_Fine_train': {  # new addition by soeaver
+    #     _IM_DIR:
+    #         _DATA_DIR + '/ATEN/VIP_Fine/train_img',
+    #     _ANN_FN:
+    #         _DATA_DIR + '/ATEN/VIP_Fine/annotations/VIP_Fine_train.json',
+    #     _FIELDS:
+    #         {'flip_map': ([14, 15], [16, 17], [18, 19])},
+    # },
+    # 'VIP_Fine_val': {  # new addition by soeaver
+    #     _IM_DIR:
+    #         _DATA_DIR + '/ATEN/VIP_Fine/val_img',
+    #     _ANN_FN:
+    #         _DATA_DIR + '/ATEN/VIP_Fine/annotations/VIP_Fine_val.json',
+    #     _FIELDS:
+    #         {'flip_map': ([14, 15], [16, 17], [18, 19])},
+    # },
+    # 'VIP_Fine_test': {  # new addition by soeaver
+    #     _IM_DIR:
+    #         _DATA_DIR + '/ATEN/VIP_Fine/test_img',
+    #     _ANN_FN:
+    #         _DATA_DIR + '/ATEN/VIP_Fine/annotations/VIP_Fine_test.json',
+    #     _FIELDS:
+    #         {'flip_map': ([14, 15], [16, 17], [18, 19])},
+    # },
     'MHP-v2_train': {  # new addition by wzh
         _IM_DIR:
             _DATA_DIR + '/MHP-v2/train_img',
@@ -445,5 +445,70 @@ COMMON_DATASETS = {
              'ignore_label': 255,
              'seg_root': _DATA_DIR + '/CIHP/val_seg',
              'label_shift': 0}
-    }
+    },
+    'LIP_train': {
+        _IM_DIR:
+            _DATA_DIR + '/LIP/Training/Images',
+        _ANN_FN:
+            _DATA_DIR + '/LIP/annotations/LIP_train.json',
+        _FIELDS:
+            {'flip_map': ([14, 15], [16, 17], [18, 19]),
+             'ignore_label': 255,
+             'seg_root': _DATA_DIR + '/LIP/Training/Category_ids',
+             'label_shift': 0}
+    },
+    'LIP_val': {
+        _IM_DIR:
+            _DATA_DIR + '/LIP/Validation/Images',
+        _ANN_FN:
+            _DATA_DIR + '/LIP/annotations/LIP_val.json',
+        _FIELDS:
+            {'flip_map': ([14, 15], [16, 17], [18, 19]),
+             'ignore_label': 255,
+             'seg_root': _DATA_DIR + '/LIP/Validation/Category_ids',
+             'label_shift': 0}
+    },
+    'LIP_test': {
+        _IM_DIR:
+            _DATA_DIR + '/LIP/Testing/Images',
+        _ANN_FN:
+            _DATA_DIR + '/LIP/annotations/LIP_test.json',
+        _FIELDS:
+            {'flip_map': ([14, 15], [16, 17], [18, 19]),
+             'ignore_label': 255,
+             'label_shift': 0}
+    },
+    'VIP_Fine_train': {
+        _IM_DIR:
+            _DATA_DIR + '/VIP/VIP_Fine/Training/Images',
+        _ANN_FN:
+            _DATA_DIR + '/VIP/VIP_Fine/annotations/VIP_Fine_train.json',
+        _FIELDS:
+            {'flip_map': ([14, 15], [16, 17], [18, 19]),
+             'ignore_label': 255,
+             'seg_root': _DATA_DIR + '/VIP/VIP_Fine/Training/Category_ids',
+             'label_shift': 0}
+    },
+    'VIP_Fine_val': {
+        _IM_DIR:
+            _DATA_DIR + '/VIP/VIP_Fine/Validation/Images',
+        _ANN_FN:
+            _DATA_DIR + '/VIP/VIP_Fine/annotations/VIP_Fine_val.json',
+        _FIELDS:
+            {'flip_map': ([14, 15], [16, 17], [18, 19]),
+             'ignore_label': 255,
+             'seg_root': _DATA_DIR + '/VIP/VIP_Fine/Validation/Category_ids',
+             'label_shift': 0}
+    },
+    'VIP_Fine_test': {
+        _IM_DIR:
+            _DATA_DIR + '/VIP/VIP_Fine/Testing/Images',
+        _ANN_FN:
+            _DATA_DIR + '/VIP/VIP_Fine/annotations/VIP_Fine_test.json',
+        _FIELDS:
+            {'flip_map': ([14, 15], [16, 17], [18, 19]),
+             'ignore_label': 255,
+             # 'seg_root': _DATA_DIR + '/VIP/VIP_Fine/Testing/Category_ids',  # no gt seg
+             'label_shift': 0}
+    },
 }

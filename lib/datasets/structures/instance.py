@@ -18,7 +18,7 @@ TO_REMOVE = 1
 class Instance(object):
     def __init__(self, bbox, image_size, labels, ann_types=None, instances=None):
         self.bbox = bbox
-        self.size = image_size # (w, h)
+        self.size = image_size  # (w, h)
         self.labels = labels
         self.ann_types = ann_types
         self.instances = {}
@@ -63,7 +63,7 @@ class Instance(object):
         for ann_type in self.ann_types:
             half_body_points = self.instances[ann_type].get_half_body_points(num_half_body, upper_body_ids)
         bbox = half_body_transform(half_body_points, x_ext_half_body,
-            y_ext_half_body, self.aspect_ratio)
+                                   y_ext_half_body, self.aspect_ratio)
 
         if bbox is not None:
             self.bbox = bbox

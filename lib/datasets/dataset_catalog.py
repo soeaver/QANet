@@ -248,18 +248,18 @@ COMMON_DATASETS = {
         _FIELDS:
             {'flip_map': ([5, 6], [7, 8], [22, 23], [24, 25], [26, 27], [28, 29], [30, 31], [32, 33])},
     },
-    'PASCAL-Person-Part_train': {  # new addition by soeaver
-        _IM_DIR:
-            _DATA_DIR + '/PASCAL-Person-Part/train_img',
-        _ANN_FN:
-            _DATA_DIR + '/PASCAL-Person-Part/annotations/pascal_person_part_train.json',
-    },
-    'PASCAL-Person-Part_test': {  # new addition by soeaver
-        _IM_DIR:
-            _DATA_DIR + '/PASCAL-Person-Part/test_img',
-        _ANN_FN:
-            _DATA_DIR + '/PASCAL-Person-Part/annotations/pascal_person_part_test.json',
-    },
+    # 'PASCAL-Person-Part_train': {  # new addition by soeaver
+    #     _IM_DIR:
+    #         _DATA_DIR + '/PASCAL-Person-Part/train_img',
+    #     _ANN_FN:
+    #         _DATA_DIR + '/PASCAL-Person-Part/annotations/pascal_person_part_train.json',
+    # },
+    # 'PASCAL-Person-Part_test': {  # new addition by soeaver
+    #     _IM_DIR:
+    #         _DATA_DIR + '/PASCAL-Person-Part/test_img',
+    #     _ANN_FN:
+    #         _DATA_DIR + '/PASCAL-Person-Part/annotations/pascal_person_part_test.json',
+    # },
     'WIDER_train': {  # new addition by soeaver
         _IM_DIR:
             _DATA_DIR + '/Wider_Face/WIDER_train',
@@ -509,6 +509,26 @@ COMMON_DATASETS = {
             {'flip_map': ([14, 15], [16, 17], [18, 19]),
              'ignore_label': 255,
              # 'seg_root': _DATA_DIR + '/VIP/VIP_Fine/Testing/Category_ids',  # no gt seg
+             'label_shift': 0}
+    },
+    'PASCAL-Person-Part_train': {
+        _IM_DIR:
+            _DATA_DIR + '/PASCAL-Person-Part/Training/Images',
+        _ANN_FN:
+            _DATA_DIR + '/PASCAL-Person-Part/annotations/PASCAL-Person-Part_train.json',
+        _FIELDS:
+            {'ignore_label': 255,
+             'seg_root': _DATA_DIR + '/PASCAL-Person-Part/Training/Category_ids',
+             'label_shift': 0}
+    },
+    'PASCAL-Person-Part_test': {
+        _IM_DIR:
+            _DATA_DIR + '/PASCAL-Person-Part/Testing/Images',
+        _ANN_FN:
+            _DATA_DIR + '/PASCAL-Person-Part/annotations/PASCAL-Person-Part_test.json',
+        _FIELDS:
+            {'ignore_label': 255,
+             'seg_root': _DATA_DIR + '/PASCAL-Person-Part/Testing/Category_ids',
              'label_shift': 0}
     },
 }

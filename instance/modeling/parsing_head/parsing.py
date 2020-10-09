@@ -70,6 +70,6 @@ class Parsing(torch.nn.Module):
 
         if self.parsingiou_on:
             _, parsingiou = self.ParsingIoU(parsing_feat, None)
-            results.update(dict(parsing_iou_scorestorch.mean(parsingiou, dim=1)))
+            results.update(dict(parsing_iou_scores=parsingiou.squeeze(1)))
 
         return results, {}

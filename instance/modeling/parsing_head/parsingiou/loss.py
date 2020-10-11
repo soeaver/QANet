@@ -6,7 +6,7 @@ class ParsingIoULossComputation(object):
         self.loss_weight = cfg.PARSING.PARSINGIOU.LOSS_WEIGHT
 
     def __call__(self, parsingiou_pred, parsingiou_gt):
-        parsingiou_loss = l2_loss(parsingiou_pred[:, ], parsingiou_gt.detach())
+        parsingiou_loss = l2_loss(parsingiou_pred[:, 0], parsingiou_gt.detach())
         parsingiou_loss = self.loss_weight * parsingiou_loss
 
         return parsingiou_loss

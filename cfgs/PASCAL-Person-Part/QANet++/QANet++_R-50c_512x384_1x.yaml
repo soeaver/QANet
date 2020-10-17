@@ -1,28 +1,42 @@
 PIXEL_MEANS: [0.485, 0.456, 0.406]
 PIXEL_STDS: [0.229, 0.224, 0.225]
-CKPT: 'ckpts/CIHP/QANet/QANet_H-W48_512x384_1x'
+CKPT: 'ckpts/PASCAL-Person-Part/QANet++/QANet++_R-50c_512x384_1x'
 DISPLAY_ITER: 20
 MODEL:
   FPN_ON: True
   PARSING_ON: True
 BACKBONE:
-  CONV_BODY: "hrnet"
-  HRNET:
-    WIDTH: 48
+  CONV_BODY: "resnet"
+  RESNET:
+    LAYERS: (3, 4, 6, 3)
+    STRIDE_3X3: True
+    USE_3x3x3HEAD: True
 FPN:
   BODY: "pfpn"
   NORM: "BN"
   PANOPTIC:
-    USE_FPN: False
     NORM: "BN"
 PARSING:
-  NUM_PARSING: 20
+  NUM_PARSING: 7
   LOSS_WEIGHT: 1.0
   LOVASZ_LOSS_WEIGHT: 1.0
   PARSINGIOU_ON: True
   PARSINGIOU:
     NUM_CONVS: 2
     CONV_DIM: 512
+  QUALITY_ON: True  # use QAM++
+  QUALITY:
+    NUM_SHARE_CONVS: 2
+    NUM_PARSING_CONVS: 1
+    NUM_IOU_CONVS: 2
+    PARSING_CONV_DIM: 128
+    IOU_CONV_DIM: 512
+    NORM: "BN"
+    QUALITY_DIM: 256
+    OUTPUT_DIM: 512
+    PARSING_LOSS_WEIGHT: 0.5
+    LOVASZ_LOSS_WEIGHT: 0.5
+    IOU_LOSS_WEIGHT: 0.5
   QUALITY_WEIGHTS: (1.0, 0.5, 3.0)  # QAM
 SOLVER:
   MAX_EPOCHS: 140
@@ -35,13 +49,13 @@ SOLVER:
   LR_POLICY: 'STEP'
   STEPS: [90, 120]
 TRAIN:
-  WEIGHTS: 'ckpts/cls/imagenet/3rdparty/hrnet/hrnet_w48_official/hrnetv2_w48_imagenet_pretrained.pth'
-  DATASETS: ('CIHP_train', )
+  WEIGHTS: 'weights/pytorch-model/resnet50_1x64d/resnet50_1x64d-77.50.pth'
+  DATASETS: ('PASCAL-Person-Part_train', )
   BATCH_SIZE: 128
   SCALES: ([384, 512],)
 TEST:
   WEIGHTS: ''
-  DATASETS: ('CIHP_val', )
+  DATASETS: ('PASCAL-Person-Part_test', )
   IMS_PER_GPU: 1
   SCALE: [384, 512]
   FREQUENCY_EPOCHS: -1

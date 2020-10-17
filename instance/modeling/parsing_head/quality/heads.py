@@ -17,12 +17,12 @@ class QualityHead(nn.Module):
 
         self.dim_in = dim_in
 
-        norm = cfg.PARSING.QUALITY.NORM
         num_share_convs = cfg.PARSING.QUALITY.NUM_SHARE_CONVS
         num_parsing_convs = cfg.PARSING.QUALITY.NUM_PARSING_CONVS
         num_iou_convs = cfg.PARSING.QUALITY.NUM_IOU_CONVS
         parsing_conv_dim = cfg.PARSING.QUALITY.PARSING_CONV_DIM
         iou_conv_dim = cfg.PARSING.QUALITY.IOU_CONV_DIM
+        norm = cfg.PARSING.QUALITY.NORM
 
         share_layers = []
         for i in range(num_share_convs):

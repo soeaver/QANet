@@ -15,22 +15,6 @@ _FIELDS = 'extra_fields'
 
 # Available datasets
 _DATASETS = {
-    'ATR_train': {
-        _IM_DIR:
-            _DATA_DIR + '/ATR/train_img',
-        _ANN_FN:
-            _DATA_DIR + '/ATR/annotations/ATR_train.json',
-        _FIELDS:
-            {'flip_map': ([9, 10], [12, 13], [14, 15])},
-    },
-    'ATR_val': {
-        _IM_DIR:
-            _DATA_DIR + '/ATR/val_img',
-        _ANN_FN:
-            _DATA_DIR + '/ATR/annotations/ATR_val.json',
-        _FIELDS:
-            {'flip_map': ([9, 10], [12, 13], [14, 15])},
-    }
 }
 _DATASETS.update(COMMON_DATASETS)
 

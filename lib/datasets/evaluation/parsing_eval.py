@@ -394,7 +394,13 @@ class ParsingEvaluator:
         assert os.path.exists(instance_par_pred_dir)
         assert os.path.exists(instance_par_gt_dir)
 
-        img_name_list = [x[:-4] for x in os.listdir(instance_par_pred_dir) if x[-3:] == 'txt']
+        # img_name_list = [x[:-4] for x in os.listdir(instance_par_pred_dir) if x[-3:] == 'txt']
+        tmp_instance_par_pred_dir = instance_par_pred_dir
+        img_name_list = []
+        while len(img_name_list) == 0:
+            img_name_list = [x.replace(instance_par_pred_dir + '/', '')[:-4] for x in
+                             glob.glob(tmp_instance_par_pred_dir) if x[-3:] == 'txt']
+            tmp_instance_par_pred_dir += '/*'
         APr = np.zeros((self.num_parsing - 1, len(self.par_thresholds)))
         with tqdm(total=self.num_parsing - 1) as pbar:
             pbar.set_description('Calculating AP^r ..')
@@ -577,6 +583,21 @@ def generate_parsing_result(parsings, instance_scores, part_scores, bbox_scores=
         os.makedirs(ins_parsing_dir)
 
     im_name = img_info['file_name']
+    if '/' in im_name:
+        folders = im_name.split('/')[:-1]
+        cur_global_parsing_dir = global_parsing_dir
+        cur_ins_semseg_dir = ins_semseg_dir
+        cur_ins_parsing_dir = ins_parsing_dir
+        for f_name in folders:
+            os.mkdir(os.path.join(cur_global_parsing_dir, f_name)) \
+                if not os.path.exists(os.path.join(cur_global_parsing_dir, f_name)) else None
+            os.mkdir(os.path.join(cur_ins_semseg_dir, f_name)) \
+                if not os.path.exists(os.path.join(cur_ins_semseg_dir, f_name)) else None
+            os.mkdir(os.path.join(cur_ins_parsing_dir, f_name)) \
+                if not os.path.exists(os.path.join(cur_ins_parsing_dir, f_name)) else None
+            cur_global_parsing_dir = cur_global_parsing_dir + '/' + f_name
+            cur_ins_semseg_dir = cur_ins_semseg_dir + '/' + f_name
+            cur_ins_parsing_dir = cur_ins_parsing_dir + '/' + f_name
     save_global_parsing = os.path.join(global_parsing_dir, im_name.replace('jpg', 'png'))
     save_ins_semseg = os.path.join(ins_semseg_dir, im_name.replace('jpg', 'png'))
     save_ins_parsing = os.path.join(ins_parsing_dir, im_name.replace('jpg', 'png'))
@@ -656,7 +677,7 @@ def generate_parsing_result(parsings, instance_scores, part_scores, bbox_scores=
     cv2.imwrite(save_ins_parsing, ins_parsing.astype(np.uint8))
     is_wfp.close()
     ip_wfp.close()
-    
+
     return parsings, instance_scores
 
 

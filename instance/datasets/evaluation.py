@@ -304,7 +304,8 @@ def prepare_parsing_results(cfg, results, targets, image_ids, dataset):
         parsings, instance_scores = generate_parsing_result(
             parsings, instance_scores, part_scores, parsing_bbox_scores.tolist(), semseg=None, img_info=img_info,
             output_folder=output_folder, score_thresh=cfg.PARSING.SCORE_THRESH,
-            semseg_thresh=cfg.PARSING.SEMSEG_SCORE_THRESH, parsing_nms_thres=cfg.PARSING.PARSING_NMS_TH
+            semseg_thresh=cfg.PARSING.SEMSEG_SCORE_THRESH, parsing_nms_thres=cfg.PARSING.PARSING_NMS_TH,
+            num_parsing=cfg.PARSING.NUM_PARSING
         )
         pars_results.extend(
             [

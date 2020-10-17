@@ -27,7 +27,7 @@ PARSING:
   METRICS: ['mIoU', 'APp']
 SOLVER:
   MAX_EPOCHS: 140
-  BASE_LR: 0.001
+  BASE_LR: 0.0005
   OPTIMIZER: 'ADAM'
   MOMENTUM: 0.9
   WEIGHT_DECAY: 0.0001
@@ -38,12 +38,13 @@ SOLVER:
 TRAIN:
   WEIGHTS: 'ckpts/cls/imagenet/3rdparty/hrnet/hrnet_w48_official/hrnetv2_w48_imagenet_pretrained.pth'
   DATASETS: ('MHP-v2_train', )
-  BATCH_SIZE: 128
+  BATCH_SIZE: 64
   SCALES: ([384, 512],)
 TEST:
   WEIGHTS: ''
   DATASETS: ('MHP-v2_val', )
   IMS_PER_GPU: 1
+  INSTANCES_PER_BATCH: 1
   SCALE: [384, 512]
   FREQUENCY_EPOCHS: -1
   INSTANCE_BBOX_FILE: ''

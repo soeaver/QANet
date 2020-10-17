@@ -567,7 +567,8 @@ class Params:
 
 
 def generate_parsing_result(parsings, instance_scores, part_scores, bbox_scores=None, semseg=None, img_info=None,
-                            output_folder=None, score_thresh=0.05, semseg_thresh=0.3, parsing_nms_thres=1.0):
+                            output_folder=None, score_thresh=0.05, semseg_thresh=0.3, parsing_nms_thres=1.0,
+                            num_parsing=20):
     parsings = np.asarray(parsings)
     instance_scores = np.asarray(instance_scores)
     part_scores = np.asarray(part_scores)
@@ -625,7 +626,8 @@ def generate_parsing_result(parsings, instance_scores, part_scores, bbox_scores=
 
     # parsing nms
     if parsing_nms_thres < 1.0:
-        parsings, instance_scores, part_scores = parsing_nms(parsings, instance_scores, part_scores, parsing_nms_thres)
+        parsings, instance_scores, part_scores = \
+            parsing_nms(parsings, instance_scores, part_scores, parsing_nms_thres, num_parsing)
 
     # generate ins_semseg and global_for_ins
     sorted_score_ids = instance_scores.argsort()
@@ -681,13 +683,13 @@ def generate_parsing_result(parsings, instance_scores, part_scores, bbox_scores=
     return parsings, instance_scores
 
 
-def parsing_nms(parsings, instance_scores, part_scores=None, nms_thresh=0.6):
+def parsing_nms(parsings, instance_scores, part_scores=None, nms_thresh=0.6, num_parsing=20):
     def fast_hist(a, b, n):
         k = (a >= 0) & (a < n)
         return np.bincount(n * a[k].astype(int) + b[k], minlength=n ** 2).reshape(n, n)
 
-    def cal_one_mean_iou(image_array, label_array, num_parsing):
-        hist = fast_hist(label_array, image_array, num_parsing).astype(np.float)
+    def cal_one_mean_iou(image_array, label_array, _num_parsing):
+        hist = fast_hist(label_array, image_array, _num_parsing).astype(np.float)
         num_cor_pix = np.diag(hist)
         num_gt_pix = hist.sum(1)
         union = num_gt_pix + hist.sum(0) - num_cor_pix
@@ -710,7 +712,7 @@ def parsing_nms(parsings, instance_scores, part_scores=None, nms_thresh=0.6):
     for i in range(sorted_instance_scores.shape[0] - 1):
         if not keepped[i]:
             continue
-        ious = parsing_iou(sorted_parsings[i], (sorted_parsings[i + 1:])[keepped[i + 1:]])
+        ious = parsing_iou(sorted_parsings[i], (sorted_parsings[i + 1:])[keepped[i + 1:]], num_parsing)
         for idx, iou in enumerate(ious):
             if iou >= nms_thresh:
                 keepped[i + 1 + idx] = False

@@ -434,7 +434,13 @@ class ParsingEvaluator:
             tp.append([])
             fp.append([])
 
-        img_name_list = [x[:-4] for x in os.listdir(instance_seg_pred_dir) if x[-3:] == 'txt']
+        # img_name_list = [x[:-4] for x in os.listdir(instance_seg_pred_dir) if x[-3:] == 'txt']
+        tmp_instance_seg_pred_dir = instance_seg_pred_dir
+        img_name_list = []
+        while len(img_name_list) == 0:
+            img_name_list = [x.replace(instance_seg_pred_dir + '/', '')[:-4] for x in
+                             glob.glob(tmp_instance_seg_pred_dir) if x[-3:] == 'txt']
+            tmp_instance_seg_pred_dir += '/*'
         for img_name in tqdm(img_name_list, desc='Calculating APh..'):
             gt_mask = cv2.imread(os.path.join(instance_seg_gt_dir, img_name + '.png'), 0)
             pre_mask = cv2.imread(os.path.join(instance_seg_pred_dir, img_name + '.png'), 0)

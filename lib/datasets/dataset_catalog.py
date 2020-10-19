@@ -334,14 +334,6 @@ COMMON_DATASETS = {
         _FIELDS:
             {'ann_types': ['bbox']}
     },
-    'objects365v2_test': {
-        _IM_DIR:
-            _DATA_DIR + '/Object365v2/images/test',
-        _ANN_FN:
-            _DATA_DIR + '/Object365v2/annotations/objects365v2_test.json',
-        _FIELDS:
-            {'ann_types': ['bbox']}
-    },
     'coco_seg_2017_train': {
         _IM_DIR:
             _DATA_DIR + '/coco/images/train2017',
@@ -450,11 +442,35 @@ COMMON_DATASETS = {
              'seg_root': _DATA_DIR + '/LIP/Training/Category_ids',
              'label_shift': 0}
     },
+    'LIP_compact-box_train': {  # compact box means that bbox tightly surrounds the human instance.
+        _IM_DIR:
+            _DATA_DIR + '/LIP/Training/Images',
+        _ANN_FN:
+            _DATA_DIR + '/LIP/annotations/LIP_compact-box_train.json',
+        _FIELDS:
+            {'ann_types': ['bbox', 'mask', 'semseg', 'parsing'],
+             'flip_map': ([14, 15], [16, 17], [18, 19]),
+             'ignore_label': 255,
+             'seg_root': _DATA_DIR + '/LIP/Training/Category_ids',
+             'label_shift': 0}
+    },
     'LIP_val': {
         _IM_DIR:
             _DATA_DIR + '/LIP/Validation/Images',
         _ANN_FN:
             _DATA_DIR + '/LIP/annotations/LIP_val.json',
+        _FIELDS:
+            {'ann_types': ['bbox', 'mask', 'semseg', 'parsing'],
+             'flip_map': ([14, 15], [16, 17], [18, 19]),
+             'ignore_label': 255,
+             'seg_root': _DATA_DIR + '/LIP/Validation/Category_ids',
+             'label_shift': 0}
+    },
+    'LIP_compact-box_val': {  # compact box means that bbox tightly surrounds the human instance.
+        _IM_DIR:
+            _DATA_DIR + '/LIP/Validation/Images',
+        _ANN_FN:
+            _DATA_DIR + '/LIP/annotations/LIP_compact-box_val.json',
         _FIELDS:
             {'ann_types': ['bbox', 'mask', 'semseg', 'parsing'],
              'flip_map': ([14, 15], [16, 17], [18, 19]),
@@ -485,11 +501,35 @@ COMMON_DATASETS = {
              'seg_root': _DATA_DIR + '/ATR/Training/Category_ids',
              'label_shift': 0}
     },
+    'ATR_compact-box_train': {  # compact box means that bbox tightly surrounds the human instance.
+        _IM_DIR:
+            _DATA_DIR + '/ATR/Training/Images',
+        _ANN_FN:
+            _DATA_DIR + '/ATR/annotations/ATR_compact-box_train.json',
+        _FIELDS:
+            {'ann_types': ['bbox', 'mask', 'semseg', 'parsing'],
+             'flip_map': ([9, 10], [12, 13], [14, 15]),
+             'ignore_label': 255,
+             'seg_root': _DATA_DIR + '/ATR/Training/Category_ids',
+             'label_shift': 0}
+    },
     'ATR_val': {
         _IM_DIR:
             _DATA_DIR + '/ATR/Validation/Images',
         _ANN_FN:
             _DATA_DIR + '/ATR/annotations/ATR_val.json',
+        _FIELDS:
+            {'ann_types': ['bbox', 'mask', 'semseg', 'parsing'],
+             'flip_map': ([9, 10], [12, 13], [14, 15]),
+             'ignore_label': 255,
+             'seg_root': _DATA_DIR + '/ATR/Validation/Category_ids',
+             'label_shift': 0}
+    },
+    'ATR_compact-box_val': {  # compact box means that bbox tightly surrounds the human instance.
+        _IM_DIR:
+            _DATA_DIR + '/ATR/Validation/Images',
+        _ANN_FN:
+            _DATA_DIR + '/ATR/annotations/ATR_compact-box_val.json',
         _FIELDS:
             {'ann_types': ['bbox', 'mask', 'semseg', 'parsing'],
              'flip_map': ([9, 10], [12, 13], [14, 15]),
@@ -588,7 +628,7 @@ COMMON_DATASETS = {
              'seg_root': _DATA_DIR + '/PASCAL-Person-Part/Testing/Category_ids',
              'label_shift': 0}
     },
-    'LaPa_compact-box_train': {
+    'LaPa_compact-box_train': {  # compact box means that bbox tightly surrounds the face instance.
         _IM_DIR:
             _DATA_DIR + '/LaPa/Training/Images',
         _ANN_FN:
@@ -600,7 +640,7 @@ COMMON_DATASETS = {
              'seg_root': _DATA_DIR + '/LaPa/Training/Category_ids',
              'label_shift': 0}
     },
-    'LaPa_compact-box_val': {
+    'LaPa_compact-box_val': {  # compact box means that bbox tightly surrounds the face instance.
         _IM_DIR:
             _DATA_DIR + '/LaPa/Validation/Images',
         _ANN_FN:
@@ -612,7 +652,7 @@ COMMON_DATASETS = {
              'seg_root': _DATA_DIR + '/LaPa/Validation/Category_ids',
              'label_shift': 0}
     },
-    'LaPa_compact-box_test': {
+    'LaPa_compact-box_test': {  # compact box means that bbox tightly surrounds the face instance.
         _IM_DIR:
             _DATA_DIR + '/LaPa/Testing/Images',
         _ANN_FN:

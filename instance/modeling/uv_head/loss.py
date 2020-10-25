@@ -1,5 +1,4 @@
 import numpy as np
-
 import torch
 from torch.nn import functional as F
 
@@ -13,8 +12,8 @@ class UVLossComputation(object):
         self.part_weight = cfg.UV.PART_WEIGHTS
         self.point_reg_weight = cfg.UV.POINT_REGRESSION_WEIGHTS
 
-    def __call__(self, uv_logits, target_UV, target_mask):
-        x_Ann, x_Index, x_U, x_V = uv_logits
+    def __call__(self, logits, target_UV, target_mask):
+        x_Ann, x_Index, x_U, x_V = logits
 
         device_id = target_mask.get_device()
         dp_x, dp_y, dp_I, dp_U, dp_V = target_UV.cpu().numpy().transpose((1, 0, 2))

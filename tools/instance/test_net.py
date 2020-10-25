@@ -1,18 +1,15 @@
-import os
-import time
 import argparse
-import numpy as np
+import os
 
 import torch
 
 import _init_paths  # pylint: disable=unused-import
-from lib.utils.net import mismatch_params_filter
-from lib.utils.checkpointer import get_weights, load_weights
-from lib.utils.new_logger import build_test_hooks
-from lib.utils.misc import mkdir_p, logging_rank, setup_logging
-from lib.utils.comm import all_gather, is_main_process, synchronize
-from lib.utils.timer import Timer
 from lib.utils.analyser import Analyser
+from lib.utils.checkpointer import get_weights, load_weights
+from lib.utils.comm import all_gather, is_main_process, synchronize
+from lib.utils.logger import build_test_hooks
+from lib.utils.misc import logging_rank, mkdir_p, setup_logging
+from lib.utils.timer import Timer
 
 from instance.core.config import get_cfg, infer_cfg
 from instance.core.test import TestEngine
@@ -93,7 +90,7 @@ def main(args):
             n_params, model_flops, conv_flops, model_activs, conv_activs
         )
     )
-    
+
     model.eval()
     model.to(torch.device(cfg.DEVICE))
 
@@ -114,12 +111,12 @@ def main(args):
 
 if __name__ == '__main__':
     # Parse arguments
-    parser = argparse.ArgumentParser(description='Pet Model Training')
+    parser = argparse.ArgumentParser(description='QANet Model Training')
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file',
-                        default='./cfgs/instance/mscoco/simple_R-50c-D3K4C256_256x192_adam_1x.yaml', type=str)
+                        default='cfgs/CIHP/QANet/QANet_R-50c_512x384_1x.yaml', type=str)
     parser.add_argument('--local_rank', type=int, default=0)
-    parser.add_argument('opts', help='See pet/instance/core/config.py for all options',
+    parser.add_argument('opts', help='See instance/core/config.py for all options',
                         default=None,
                         nargs=argparse.REMAINDER)
 

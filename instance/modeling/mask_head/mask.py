@@ -1,27 +1,30 @@
 import torch
 
-from instance.modeling.mask_head import heads
-from instance.modeling.mask_head import outputs
+from instance.modeling import registry
+from instance.modeling.mask_head import heads, outputs
 from instance.modeling.mask_head.loss import mask_loss_evaluator
 from instance.modeling.mask_head.maskiou.maskiou import MaskIoU
-from instance.modeling import registry
 
 
 class Mask(torch.nn.Module):
-    def __init__(self, cfg, dim_in, spatial_scale):
+    def __init__(self, cfg, dim_in, spatial_in):
         super(Mask, self).__init__()
-        self.spatial_scale = spatial_scale
+        self.dim_in = dim_in
+        self.spatial_in = spatial_in
         self.maskiou_on = cfg.MASK.MASKIOU_ON
 
         head = registry.MASK_HEADS[cfg.MASK.MASK_HEAD]
-        self.Head = head(cfg, dim_in, self.spatial_scale)
+        self.Head = head(cfg, dim_in, self.spatial_in)
         output = registry.MASK_OUTPUTS[cfg.MASK.MASK_OUTPUT]
-        self.Output = output(cfg, self.Head.dim_out, self.Head.spatial_scale)
+        self.Output = output(cfg, self.Head.dim_out, self.Head.spatial_out)
 
         self.loss_evaluator = mask_loss_evaluator(cfg)
 
         if self.maskiou_on:
-            self.MaskIoU = MaskIoU(cfg, self.Head.dim_out, self.Head.spatial_scale)
+            self.MaskIoU = MaskIoU(cfg, self.Head.dim_out, self.Head.spatial_out)
+
+        self.dim_out = self.Output.dim_out
+        self.spatial_out = self.Output.spatial_out
 
     def forward(self, conv_features, targets=None):
         if self.training:
@@ -30,26 +33,32 @@ class Mask(torch.nn.Module):
             return self._forward_test(conv_features, targets)
 
     def _forward_train(self, conv_features, targets=None):
-        mask_feat = self.Head(conv_features)
-        mask_logits = self.Output(mask_feat, targets['labels'])
+        losses = dict()
+
+        x = self.Head(conv_features)
+        logits = self.Output(x, targets['labels'])
+
+        loss_mask, maskiou_targets = self.loss_evaluator(logits, targets['mask'])
+        losses.update(dict(loss_mask=loss_mask))
 
         if self.maskiou_on:
-            loss_mask, maskiou_targets = self.loss_evaluator(mask_logits, targets['mask'])
-            loss_maskiou, _ = self.MaskIoU(mask_feat, mask_logits, targets['labels'], maskiou_targets)
-            return None, dict(loss_mask=loss_mask, loss_maskiou=loss_maskiou)
-        else:
-            loss_mask = self.loss_evaluator(mask_logits, targets['mask'])
-            return None, dict(loss_mask=loss_mask)
+            loss_maskiou, _ = self.MaskIoU(x, targets['labels'], maskiou_targets)
+            losses.update(dict(loss_maskiou=loss_maskiou))
+
+        return None, losses
 
     def _forward_test(self, conv_features, targets=None):
-        mask_feat = self.Head(conv_features)
-        mask_logits = self.Output(mask_feat, targets)
+        x = self.Head(conv_features)
+        logits = self.Output(x, targets)
 
-        output = mask_logits.sigmoid()
+        output = logits[-1].sigmoid()
+        results = dict(
+            probs=output,
+            mask_iou_scores=torch.ones(output.size()[0], dtype=torch.float32, device=output.device)
+        )
 
         if self.maskiou_on:
-            _, maskiou = self.MaskIoU(mask_feat, mask_logits, targets, None)
-            return dict(probs=output, mask_iou_scores=maskiou), {}
-        else:
-            return dict(probs=output, mask_iou_scores=torch.ones(output.size()[0], dtype=torch.float32,
-                                                                 device=output.device)), {}
+            _, maskiou = self.MaskIoU(x, targets, None)
+            results.update(dict(mask_iou_scores=maskiou))
+
+        return results, {}

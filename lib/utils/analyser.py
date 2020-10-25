@@ -1,23 +1,16 @@
-import numpy as np
 import tabulate
-from collections import Counter, defaultdict
+from collections import defaultdict
 
 import torch
 import torch.nn as nn
 
-from lib.datasets.structures.image_list import to_image_list, ImageList
-from lib.datasets.structures.bounding_box import BoxList
-from .misc import logging_rank
+from lib.data.structures.bounding_box import BoxList
+from lib.data.structures.image_list import to_image_list
+from lib.utils.misc import logging_rank
 
-from .jit_handles import (
-    addmm_flop_jit,
-    conv_flop_jit,
-    einsum_flop_jit,
-    get_jit_model_analysis,
-    matmul_flop_jit,
-    batchnorm_flop_jit,
-    generic_activation_jit
-)
+from .jit_handles import (addmm_flop_jit, batchnorm_flop_jit, conv_flop_jit,
+                          einsum_flop_jit, generic_activation_jit,
+                          get_jit_model_analysis, matmul_flop_jit)
 
 _IGNORED_OPS = [
     # 'aten::batch_norm',

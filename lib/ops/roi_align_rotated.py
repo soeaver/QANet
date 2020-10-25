@@ -5,7 +5,6 @@ from torch.nn.modules.utils import _pair
 
 from lib.ops import _C
 
-
 INTERPOLATION_METHOD = {"bilinear": 0, "nearest": 1}
 
 

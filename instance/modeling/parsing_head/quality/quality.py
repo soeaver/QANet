@@ -2,10 +2,9 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from lib.datasets.structures.bounding_box import BoxList
 from lib.layers import make_conv, make_norm, make_fc, make_act
-from instance.modeling.parsing_head.quality import heads
-from instance.modeling.parsing_head.quality import outputs
+
+from instance.modeling.parsing_head.quality import heads, outputs
 from instance.modeling.parsing_head.quality.loss import quality_loss_evaluator
 from instance.modeling import registry
 
@@ -13,7 +12,7 @@ from instance.modeling import registry
 class QualityEncoder(torch.nn.Module):
     def __init__(self, cfg, dim_in, dropout=0.05):
         super(QualityEncoder, self).__init__()
-        self.dim_in = dim_in
+        self.dim_in = dim_in[-1]
 
         q_dim = cfg.PARSING.QUALITY.QUALITY_DIM  # 256
         output_dim = cfg.PARSING.QUALITY.OUTPUT_DIM  # 512
@@ -33,7 +32,7 @@ class QualityEncoder(torch.nn.Module):
             # nn.Dropout2d(dropout)
         )
 
-        self.dim_out = output_dim
+        self.dim_out = [output_dim]
 
     def forward(self, features, parsing_logits, iou_pred):
         """
@@ -68,7 +67,6 @@ class QualityEncoder(torch.nn.Module):
         iou_quality = torch.matmul(feat_key, iou_query).permute(0, 2, 1).view(b, 1, h, w)
         # [b, 1, h, w] -> [b, q_dim, h, w] -> [b, q_dim, hw]
         iou_quality = self.iou_quality(iou_quality).view(b, self.q_dim, -1)
-        # iou_quality = F.softmax(iou_quality, dim=1)
 
         # [b, q_dim, q_dim] * [b, q_dim, hw] -> [b, q_dim, hw] -> [b, q_dim, h, w]
         quality_feat = torch.matmul(prob_quality, iou_quality).view(b, self.q_dim, h, w)
@@ -80,21 +78,22 @@ class QualityEncoder(torch.nn.Module):
 
 
 class Quality(torch.nn.Module):
-    def __init__(self, cfg, dim_in, spatial_scale):
+    def __init__(self, cfg, dim_in, spatial_in):
         super(Quality, self).__init__()
-        self.dim_in = dim_in[-1]
-        self.spatial_scale = spatial_scale
+        self.dim_in = dim_in
+        self.spatial_in = spatial_in
 
         head = registry.QUALITY_HEADS[cfg.PARSING.QUALITY.QUALITY_HEAD]
-        self.Head = head(cfg, self.dim_in, self.spatial_scale)
+        self.Head = head(cfg, self.dim_in, self.spatial_in)
         output = registry.QUALITY_OUTPUTS[cfg.PARSING.QUALITY.QUALITY_OUTPUT]
-        self.Output = output(cfg, self.Head.dim_out, self.Head.spatial_scale)
+        self.Output = output(cfg, self.Head.dim_out, self.Head.spatial_out)
 
         self.QualityEncoder = QualityEncoder(cfg, self.dim_in)
 
         self.loss_evaluator = quality_loss_evaluator(cfg)
 
-        self.dim_out = [cfg.PARSING.QUALITY.OUTPUT_DIM]
+        self.dim_out = self.QualityEncoder.dim_out
+        self.spatial_out = spatial_in
 
     def forward(self, features, parsing_targets=None):
         """

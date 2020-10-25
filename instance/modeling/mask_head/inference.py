@@ -1,5 +1,4 @@
 import numpy as np
-
 import torch
 from torch.nn import functional as F
 
@@ -101,11 +100,15 @@ def get_mask_results(cfg, probs, targets):
     ims_probs = paste_mask_aug(cfg, probs, all_boxes, ims_h_max, ims_w_max, chunks)
 
     ims_masks = (ims_probs >= 0.5).to(dtype=torch.bool)
-    ims_masks_tl = (ims_probs >= cfg.MASK.PIXEL_SCORE_TH).to(dtype=torch.bool)
-    ims_masks_th = (ims_probs >= (1 - cfg.MASK.PIXEL_SCORE_TH)).to(dtype=torch.bool)
 
-    mask_pixel_scores = torch.sum(ims_masks_th, dim=[1, 2]).to(dtype=torch.float32) \
-                        / torch.clamp(torch.sum(ims_masks_tl, dim=[1, 2]).to(dtype=torch.float32), min=1e-6)
+    # high confidence mask (hcm)
+    inst_hcm = (ims_probs >= (1 - cfg.MASK.PIXEL_SCORE_TH)).to(dtype=torch.bool)
+    # low confidence mask (lcm)
+    inst_lcm = (ims_probs >= cfg.MASK.PIXEL_SCORE_TH).to(dtype=torch.bool)
+    inst_hcm_num = torch.sum(inst_hcm, dim=[1, 2]).to(dtype=torch.float32)
+    inst_lcm_num = torch.clamp(torch.sum(inst_lcm, dim=[1, 2]).to(dtype=torch.float32), min=1e-6)
+
+    mask_pixel_scores = inst_hcm_num / inst_lcm_num
 
     boxes_per_image = [len(target) for target in targets]
     ims_masks = ims_masks.split(boxes_per_image, dim=0)

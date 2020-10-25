@@ -1,15 +1,15 @@
 import os
-
 import torch.utils.data
 
-from lib.datasets.datasets.coco_instance import COCOInstanceDataset, COCOInstanceTestDataset
-from lib.datasets.datasets.concat_dataset import ConcatDataset
-from lib.datasets import samplers
-from lib.datasets.collate_batch import BatchCollator
-from lib.utils.misc import logging_rank
+from lib.data import samplers
+from lib.data.collate_batch import BatchCollator
+from lib.data.datasets.instance_data import COCOInstanceDataset, COCOInstanceTestDataset
+from lib.data.datasets.concat_dataset import ConcatDataset
 from lib.utils.comm import get_world_size
+from lib.utils.misc import logging_rank
+
+from instance.datasets.dataset_catalog import contains, get_ann_fn, get_extra_fields, get_im_dir
 from instance.datasets.transform import build_transforms
-from instance.datasets.dataset_catalog import contains, get_im_dir, get_ann_fn, get_extra_fields
 
 
 def build_dataset(cfg, is_train=True):
@@ -55,7 +55,7 @@ def build_dataset(cfg, is_train=True):
     # for training, concatenate all datasets into a single one
     dataset = datasets[0]
     if len(datasets) > 1:
-        dataset = D.ConcatDataset(datasets)
+        dataset = ConcatDataset(datasets)
 
     return dataset
 
@@ -80,7 +80,7 @@ def make_train_data_loader(cfg, datasets, train_sampler):
         drop_last=True,
         pin_memory=True
     )
-    
+
     return data_loader
 
 

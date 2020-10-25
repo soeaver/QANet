@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 import torch.distributed as dist
+import torch.nn as nn
 from torch.autograd.function import Function
 
 from lib.utils.comm import get_world_size

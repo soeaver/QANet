@@ -1,9 +1,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys
-import subprocess
 import os
-from argparse import ArgumentParser, REMAINDER
+import subprocess
+import sys
+from argparse import REMAINDER, ArgumentParser
 
 
 def _find_free_port():
@@ -61,7 +61,7 @@ def main():
         #       "your application as needed. \n"
         #       "*****************************************".format(current_env["OMP_NUM_THREADS"]))
 
-    testing_script = 'tools/instance/test_net.py'
+    testing_script = "tools/instance/test_net.py"
 
     for local_rank in range(0, num_gpus):
         # each process's rank

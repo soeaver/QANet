@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-    
+
 
 # 2d space nonlocal (v1: spatial downsample)
 class NonLocal2d(nn.Module):

@@ -1,20 +1,22 @@
 import torch
 
-from instance.modeling.uv_head import heads
-from instance.modeling.uv_head import outputs
-from instance.modeling.uv_head.loss import UV_loss_evaluator
 from instance.modeling import registry
+from instance.modeling.uv_head import heads, outputs
+from instance.modeling.uv_head.loss import UV_loss_evaluator
 
 
 class UV(torch.nn.Module):
-    def __init__(self, cfg, dim_in, spatial_scale):
+    def __init__(self, cfg, dim_in, spatial_in):
         super(UV, self).__init__()
-        self.spatial_scale = spatial_scale
-
+        self.dim_in = dim_in
+        self.spatial_in = spatial_in
         head = registry.UV_HEADS[cfg.UV.UV_HEAD]
-        self.Head = head(cfg, dim_in, self.spatial_scale)
+        self.Head = head(cfg, dim_in, self.spatial_in)
         output = registry.UV_OUTPUTS[cfg.UV.UV_OUTPUT]
-        self.Output = output(cfg, self.Head.dim_out, self.Head.spatial_scale)
+        self.Output = output(cfg, self.Head.dim_out, self.Head.spatial_out)
+
+        self.dim_out = self.Output.dim_out
+        self.spatial_out = self.Output.spatial_out
 
         self.loss_evaluator = UV_loss_evaluator(cfg)
 
@@ -26,10 +28,10 @@ class UV(torch.nn.Module):
 
     def _forward_train(self, conv_features, targets=None):
         uv_feat = self.Head(conv_features)
-        output = self.Output(uv_feat)
+        logits = self.Output(uv_feat)
 
         loss_seg_AnnIndex, loss_IndexUVPoints, loss_Upoints, loss_Vpoints = \
-            self.loss_evaluator(output, targets['uv'], targets['uv_mask'])
+            self.loss_evaluator(logits, targets['uv'], targets['uv_mask'])
         loss_dict = dict(loss_Upoints=loss_Upoints, loss_Vpoints=loss_Vpoints,
                          loss_seg_Ann=loss_seg_AnnIndex, loss_IPoints=loss_IndexUVPoints)
 
@@ -37,7 +39,7 @@ class UV(torch.nn.Module):
 
     def _forward_test(self, conv_features, targets=None):
         uv_feat = self.Head(conv_features)
-        output = self.Output(uv_feat)
-
-        return dict(probs=output, uv_iou_scores=torch.ones(output[0].size()[0], dtype=torch.float32,
-                                                            device=output[0].device)), {}
+        logits = self.Output(uv_feat)
+        uv_logits = logits[-1]
+        return dict(probs=uv_logits, uv_iou_scores=torch.ones(uv_logits[0].size()[0], dtype=torch.float32,
+                                                            device=uv_logits[0].device)), {}

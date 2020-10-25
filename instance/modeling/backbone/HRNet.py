@@ -12,6 +12,9 @@ class HRNet(hr.HRNet):
         """ Constructor
         """
         super(HRNet, self).__init__()
+        self.dim_in = 3
+        self.spatial_in = [1]
+
         block_1 = Bottleneck
         block_2 = BasicBlock
 
@@ -29,7 +32,7 @@ class HRNet(hr.HRNet):
         multi_out = 1 if self.stride == 4 else 4
 
         self.inplanes = 64  # default 64
-        self.conv1 = nn.Conv2d(3, 64, 3, 2, 1, bias=False)
+        self.conv1 = nn.Conv2d(self.dim_in, 64, 3, 2, 1, bias=False)
         self.bn1 = make_norm(64, norm=norm.replace('Mix', ''))
         self.conv2 = nn.Conv2d(64, 64, 3, 2, 1, bias=False)
         self.bn2 = make_norm(64, norm=norm.replace('Mix', ''))
@@ -58,7 +61,7 @@ class HRNet(hr.HRNet):
         )  # Stage 4 with 3 groups of block modules, which has 4 branches
 
         self.dim_out = self.stage_out_dim[1:int(math.log(self.stride, 2))]
-        self.spatial_scale = self.stage_out_spatial[1:int(math.log(self.stride, 2))]
+        self.spatial_out = self.stage_out_spatial[1:int(math.log(self.stride, 2))]
 
         del self.incre_modules
         del self.downsamp_modules

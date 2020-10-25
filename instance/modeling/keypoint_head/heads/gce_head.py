@@ -1,14 +1,16 @@
 from torch import nn
 
 from lib.layers import make_conv, make_norm, make_act, ASPP, NonLocal2d
+
 from instance.modeling import registry
 
 
 @registry.KEYPOINT_HEADS.register("gce_head")
 class GCEHead(nn.Module):
-    def __init__(self, cfg, dim_in, spatial_scale):
+    def __init__(self, cfg, dim_in, spatial_in):
         super(GCEHead, self).__init__()
         self.dim_in = dim_in[-1]
+        self.spatial_in = spatial_in[-1]
 
         use_nl = cfg.KEYPOINT.GCE_HEAD.USE_NL
         norm = cfg.MASK.GCE_HEAD.NORM
@@ -51,8 +53,8 @@ class GCEHead(nn.Module):
             )
             self.dim_in = conv_dim
         self.conv_after_aspp = nn.Sequential(*after_aspp_list) if len(after_aspp_list) else None
-        self.dim_out = self.dim_in
-        self.spatial_scale = spatial_scale
+        self.dim_out = [self.dim_in]
+        self.spatial_out = [self.spatial_in]
 
         self._init_weights()
 
@@ -78,4 +80,4 @@ class GCEHead(nn.Module):
         x = self.feat(x)
         if self.conv_after_aspp is not None:
             x = self.conv_after_aspp(x)
-        return x
+        return [x]

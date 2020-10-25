@@ -1,0 +1,40 @@
+PIXEL_MEANS: [0.485, 0.456, 0.406]
+PIXEL_STDS: [0.229, 0.224, 0.225]
+CKPT: 'ckpts/mscoco/R-50c-XDECONV_192x192_0.5x'
+DISPLAY_ITER: 20
+MODEL:
+  FPN_ON: True
+  MASK_ON: True
+BACKBONE:
+  CONV_BODY: "resnet"
+  RESNET:
+    LAYERS: (3, 4, 6, 3)
+    STRIDE_3X3: True
+    USE_3x3x3HEAD: True
+MASK:
+  NUM_CLASSES: 81
+  QUALITY_WEIGHTS: (1.0, 0.0, 0.0)
+SOLVER:
+  MAX_EPOCHS: 70
+  BASE_LR: 0.004
+  OPTIMIZER: 'ADAM'
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 0.0001
+  WARM_UP_EPOCH: 0
+  WARM_UP_FACTOR: 0.1
+  LR_POLICY: 'STEP'
+  STEPS: [45, 60]
+TRAIN:
+  WEIGHTS: 'weights/pytorch-model/resnet50_1x64d/resnet50_1x64d-77.50.pth'
+  DATASETS: ('coco_2017_train', )
+  BATCH_SIZE: 512
+  SCALES: ([192, 192],)
+TEST:
+  WEIGHTS: ''
+  DATASETS: ('coco_2017_val', )
+  IMS_PER_GPU: 1
+  SCALE: [192, 192]
+  FREQUENCY_EPOCHS: -1
+  INSTANCE_BBOX_FILE: ''
+  AUG:
+    H_FLIP: True  # use flip test

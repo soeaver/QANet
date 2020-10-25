@@ -4,13 +4,10 @@ Saining Xie, Ross Girshick, Piotr Dollar, Zhuowen Tu, Kaiming He. (2017 CVPR).
 Aggregated residual transformations for deep neural networks. 
 Copyright (c) Yang Lu, 2017
 """
-import math
-
-import torch
 import torch.nn as nn
 
 import lib.ops as ops
-from lib.layers import make_norm, Bottleneck, AlignedBottleneck
+from lib.layers import AlignedBottleneck, Bottleneck, make_norm
 
 
 class ResNeXt(nn.Module):

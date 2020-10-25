@@ -6,16 +6,17 @@ from instance.modeling import registry
 
 @registry.QUALITY_OUTPUTS.register("quality_output")
 class QualityOutput(nn.Module):
-    def __init__(self, cfg, dim_in, spatial_scale):
+    def __init__(self, cfg, dim_in, spatial_in):
         super(QualityOutput, self).__init__()
 
         dim_in_p, dim_in_i = dim_in
-        self.spatial_scale_p, _ = spatial_scale
+        self.spatial_in_p, _ = spatial_in
 
         self.parsing_score = nn.Conv2d(dim_in_p, cfg.PARSING.NUM_PARSING, kernel_size=1, stride=1, padding=0)
         self.parsing_iou = nn.Linear(dim_in_i, 1)
 
         self.dim_out = [cfg.PARSING.NUM_PARSING, 1]
+        self.spatial_out = [1.0, (1, 1)]
 
         self._init_weights()
 

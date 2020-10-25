@@ -1,23 +1,23 @@
 import os
 import numpy as np
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from lib.data.structures.densepose_uv import flip_uv_prob
+from lib.data.structures.image_list import to_image_list
+from lib.data.structures.instance_box import instancebox_split
+from lib.data.structures.keypoint import flip_keypoints_prob
+from lib.data.structures.parsing import flip_parsing_prob
 from lib.ops import roi_align_rotated
-from lib.datasets.structures.image_list import to_image_list
-from lib.datasets.structures.instance_box import instancebox_split
-from instance.modeling.mask_head.inference import get_mask_results
-from instance.modeling.keypoint_head.inference import get_keypoints_results
-from instance.modeling.parsing_head.inference import get_parsing_results
-from instance.modeling.uv_head.inference import get_uv_results
-from lib.datasets.structures.keypoint import flip_keypoints_prob
-from lib.datasets.structures.parsing import flip_parsing_prob
-from lib.datasets.structures.densepose_uv import flip_uv_prob
 from lib.utils.comm import is_main_process
 from lib.utils.misc import mkdir_p
+
 from instance.datasets.dataset_catalog import get_extra_fields
+from instance.modeling.keypoint_head.inference import get_keypoints_results
+from instance.modeling.mask_head.inference import get_mask_results
+from instance.modeling.parsing_head.inference import get_parsing_results
+from instance.modeling.uv_head.inference import get_uv_results
 
 
 class TestEngine(object):

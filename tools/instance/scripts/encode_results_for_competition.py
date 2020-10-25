@@ -1,34 +1,30 @@
-#!/usr/bin/env python2
-
-"""encode_results.py: script to encode dense human pose estimation results
-in DensePose format into a packed representation using PNG compression.
-"""
-
-__author__    = "Vasil Khalidov"
+__author__ = "Vasil Khalidov"
 __copyright__ = "Copyright (c) 2018-present, Facebook, Inc."
 
-import os
-import sys
-import pickle
-import copy
-import json
-import time
 import argparse
+import json
+import os
+import pickle
+import sys
+import time
+
 import numpy as np
 
 kPositiveAnswers = ['y', 'Y']
 kNegativeAnswers = ['n', 'N']
 kAnswers = kPositiveAnswers + kNegativeAnswers
 
+
 def _parseArguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('inPklResultsFile', help='Input pickle file with'
-        ' dense human pose estimation results')
+                                                 ' dense human pose estimation results')
     parser.add_argument('outJsonPackedFile', help='Output JSON file with'
-        ' packed dense human pose estimation results, which can be'
-        ' used for submission')
+                                                  ' packed dense human pose estimation results, which can be'
+                                                  ' used for submission')
     args = parser.parse_args()
     return args
+
 
 def _encodePngData(arr):
     """
@@ -39,11 +35,11 @@ def _encodePngData(arr):
     from PIL import Image
     import StringIO
     assert len(arr.shape) == 3, "Expected a 3D array as an input," \
-            " got a {0}D array".format(len(arr.shape))
+                                " got a {0}D array".format(len(arr.shape))
     assert arr.shape[0] == 3, "Expected first array dimension of size 3," \
-            " got {0}".format(arr.shape[0])
+                              " got {0}".format(arr.shape[0])
     assert arr.dtype == np.uint8, "Expected an array of type np.uint8, " \
-            " got {0}".format(arr.dtype)
+                                  " got {0}".format(arr.dtype)
     data = np.moveaxis(arr, 0, -1)
     im = Image.fromarray(data)
     fStream = StringIO.StringIO()
@@ -51,16 +47,18 @@ def _encodePngData(arr):
     s = fStream.getvalue()
     return s.encode('base64')
 
+
 def _statusStr(i, dataLen):
     kProgressWidth = 20
     kProgressTemplate = '[{0}] {1: 4d}%'
     progressVisNDone = min(max(0, i * kProgressWidth // dataLen),
-        kProgressWidth)
-    progressVisNTodo = kProgressWidth - progressVisNDone 
+                           kProgressWidth)
+    progressVisNTodo = kProgressWidth - progressVisNDone
     progressVis = '*' * progressVisNDone + ' ' * progressVisNTodo
     progressNum = i * 100 // dataLen
     progressStr = kProgressTemplate.format(progressVis, progressNum)
     return progressStr
+
 
 def _savePngJson(hInPklResultsFile, hOutJsonPackedFile):
     from PIL import Image
@@ -77,7 +75,8 @@ def _savePngJson(hInPklResultsFile, hOutJsonPackedFile):
         sys.stdout.write(statusStr)
     sys.stdout.write('\n')
     json.dump(dataFPickle, hOutJsonPackedFile, ensure_ascii=False,
-        sort_keys=True, indent=4)
+              sort_keys=True, indent=4)
+
 
 def main():
     args = _parseArguments()
@@ -85,7 +84,7 @@ def main():
         answer = ''
         while not answer in kAnswers:
             answer = raw_input('File "{0}" already exists, overwrite? [y/n] '
-                .format(args.outJsonPackedFile))
+                               .format(args.outJsonPackedFile))
         if answer in kNegativeAnswers:
             sys.exit(1)
 
@@ -96,6 +95,7 @@ def main():
         _savePngJson(hIn, hOut)
         end = time.clock()
         print('Finished encoding png, time {0}s'.format(end - start))
+
 
 if __name__ == "__main__":
     main()

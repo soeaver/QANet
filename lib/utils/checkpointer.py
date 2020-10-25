@@ -1,14 +1,13 @@
+import numpy as np
 import os
 import shutil
-import numpy as np
 from collections import OrderedDict
 
 import torch
 import torch.nn.init as init
 
-import lib.ops as ops
-from .misc import logging_rank
-from .net import mismatch_params_filter
+from lib.utils.misc import logging_rank
+from lib.utils.net import mismatch_params_filter
 
 
 def get_weights(ckpt_path, cfg_test_weights, mode='latest'):

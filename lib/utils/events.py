@@ -1,12 +1,12 @@
-import os
-import json
-import torch
-import shutil
-import logging
 import datetime
+import json
+import logging
 import numpy as np
-from collections import defaultdict, deque
+import os
+from collections import defaultdict
 from contextlib import contextmanager
+
+import torch
 
 from lib.utils.misc import logging_rank, setup_logging
 

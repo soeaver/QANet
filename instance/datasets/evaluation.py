@@ -1,20 +1,19 @@
-import os
-import cv2
 import json
+import os
 import pickle
 import shutil
+import cv2
 import numpy as np
-from scipy.sparse import csr_matrix
-
+import pycocotools.mask as mask_util
+import torch
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
-import pycocotools.mask as mask_util
+from scipy.sparse import csr_matrix
 
-import torch
-
+from lib.data.evaluation.densepose_eval import DensePoseEvaluator
+from lib.data.evaluation.parsing_eval import ParsingEvaluator, generate_parsing_result
 from lib.utils.visualizer import Visualizer
-from lib.datasets.evaluation.densepose_eval import DensePoseEvaluator
-from lib.datasets.evaluation.parsing_eval import ParsingEvaluator, generate_parsing_result
+
 from instance.datasets import dataset_catalog
 
 
@@ -97,7 +96,7 @@ class Evaluation(object):
             im = dataset.pull_image(idx)
             visualizer = Visualizer(self.cfg.VIS, im, dataset=dataset)
             im_name = dataset.get_img_info(image_ids[k])['file_name']
-            vis_im = visualizer.vis_instance_preds(
+            vis_im = visualizer.vis_preds(
                 boxes=ims_dets[k],
                 classes=ims_labels[k],
                 masks=ims_masks[k],

@@ -76,7 +76,7 @@ __global__ void overlaps_kernel(
     int offset;
     T iou, weight;
     T* query_box;
-  
+
     T* dev_x1 = dev_dets + 0;
     T* dev_y1 = dev_dets + 1;
     T* dev_x2 = dev_dets + 2;

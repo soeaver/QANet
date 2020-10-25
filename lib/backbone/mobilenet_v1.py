@@ -7,7 +7,7 @@ Copyright (c) Yang Lu, 2017
 import torch.nn as nn
 import torch.nn.functional as F
 
-from lib.layers import make_norm, make_act
+from lib.layers import make_act, make_norm
 from lib.utils.net import make_divisible
 
 

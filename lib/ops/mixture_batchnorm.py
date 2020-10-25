@@ -3,12 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class H_Sigmoid(nn.Module):
-    def forward(self, x):
-        out = F.relu6(x + 3, inplace=True) / 6
-        return out
-
-
 class AttentionWeights(nn.Module):
     expansion = 2
 
@@ -20,7 +14,7 @@ class AttentionWeights(nn.Module):
         self.attention = nn.Sequential(
             nn.Conv2d(num_channels, k, 1, bias=False),
             nn.BatchNorm2d(k) if norm == 'BN' else nn.GroupNorm(group, k),
-            H_Sigmoid() if use_hsig else nn.Sigmoid()
+            nn.Hardsigmoid() if use_hsig else nn.Sigmoid()
         )
 
     def forward(self, x):

@@ -4,13 +4,10 @@ Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zhmoginov, Liang-Chieh Chen, e
 Inverted Residuals and Linear Bottlenecks Mobile Networks for Classification, Detection and Segmentation. 
 Copyright (c) Yang Lu, 2018
 """
-import copy
-
 import torch.nn as nn
 import torch.nn.functional as F
 
-import lib.ops as ops
-from lib.layers import make_norm, make_act, InvertedResidual
+from lib.layers import InvertedResidual, make_act, make_norm
 from lib.utils.net import make_divisible
 
 MV2_CFG = {

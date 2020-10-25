@@ -4,7 +4,7 @@ from bisect import bisect_right
 
 from torch.optim import lr_scheduler
 
-from .misc import logging_rank
+from lib.utils.misc import logging_rank
 
 
 def _get_lr_change_ratio(cur_lr, new_lr):

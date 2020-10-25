@@ -2,15 +2,16 @@ import torch
 import torch.nn as nn
 
 from lib.layers import make_norm
+
 from instance.modeling import registry
 
 
 @registry.FPN_BODY.register("xdeconv")
 class XDeConv(nn.Module):
-    def __init__(self, cfg, dim_in, spatial_scale):
+    def __init__(self, cfg, dim_in, spatial_in):
         super().__init__()
         self.dim_in = dim_in[-1]
-        self.spatial_scale = spatial_scale[-1]
+        self.spatial_in = spatial_in[-1]
 
         hidden_dim = cfg.FPN.DECONVX.HEAD_DIM  # default: 256
         head_decay_factor = cfg.FPN.DECONVX.HEAD_DECAY_FACTOR  # default: 1
@@ -31,11 +32,11 @@ class XDeConv(nn.Module):
             ])
             self.dim_in = hidden_dim
             hidden_dim //= head_decay_factor
-            self.spatial_scale *= 2
+            self.spatial_in *= 2
         self.deconv_module = nn.Sequential(*deconv_list)
 
         self.dim_out = [self.dim_in]
-        self.spatial_scale = [self.spatial_scale]
+        self.spatial_out = [self.spatial_in]
 
         self._init_weights()
 

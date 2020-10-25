@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 import lib.ops as ops
@@ -99,10 +98,12 @@ def make_act(act='ReLU', **kwargs):
         "ReLU6": nn.ReLU6(inplace=inplace),
         "PReLU": nn.PReLU(),
         "LeakyReLU": nn.LeakyReLU(inplace=inplace),
+        "H_Sigmoid": nn.Hardsigmoid(),
         "Sigmoid": nn.Sigmoid(),
-        "H_Sigmoid": ops.H_Sigmoid(),
-        "Swish": ops.Swish(),
-        "H_Swish": ops.H_Swish(),
+        "TanH": nn.Tanh(),
+        "H_Swish": nn.Hardswish(),
+        "Swish": ops.Swish(),   # torch >= 1.7.0, nn.SiLU()
+        "Mish": ops.Mish(),
     }[act]
 
     return act

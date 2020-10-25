@@ -1,10 +1,10 @@
 import math
-
 import torch.nn as nn
 
 import lib.backbone.mobilenet_v2 as mv2
-from lib.layers import make_norm, make_act, InvertedResidual
+from lib.layers import InvertedResidual, make_act, make_norm
 from lib.utils.net import make_divisible
+
 from instance.modeling import registry
 
 
@@ -13,6 +13,9 @@ class MobileNetV2(mv2.MobileNetV2):
         """ Constructor
         """
         super(MobileNetV2, self).__init__()
+        self.dim_in = 3
+        self.spatial_in = [1]
+
         block = InvertedResidual
         widen_factor = cfg.BACKBONE.MV2.WIDEN_FACTOR
         layers_cfg = mv2.MV2_CFG['A']
@@ -28,7 +31,7 @@ class MobileNetV2(mv2.MobileNetV2):
         self.activation = make_act(act=act)
 
         self.inplanes = make_divisible(layers_cfg[0][0][1] * widen_factor, 8)
-        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=layers_cfg[0][0][0], stride=layers_cfg[0][0][4],
+        self.conv1 = nn.Conv2d(self.dim_in, self.inplanes, kernel_size=layers_cfg[0][0][0], stride=layers_cfg[0][0][4],
                                padding=layers_cfg[0][0][0] // 2, bias=False)
         self.bn1 = make_norm(self.inplanes, norm=norm)
 
@@ -39,7 +42,7 @@ class MobileNetV2(mv2.MobileNetV2):
         self.layer4 = self._make_layer(block, layers_cfg[5], dilation=1)
 
         self.dim_out = self.stage_out_dim[1:int(math.log(self.stride, 2))]
-        self.spatial_scale = self.stage_out_spatial[1:int(math.log(self.stride, 2))]
+        self.spatial_out = self.stage_out_spatial[1:int(math.log(self.stride, 2))]
 
         del self.conv_out
         del self.bn_out

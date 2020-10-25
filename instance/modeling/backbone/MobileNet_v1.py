@@ -1,11 +1,11 @@
 import math
-
 import torch.nn as nn
 
 import lib.backbone.mobilenet_v1 as mv1
 import lib.ops as ops
-from lib.layers import make_norm, make_act
+from lib.layers import make_act, make_norm
 from lib.utils.net import make_divisible
+
 from instance.modeling import registry
 
 
@@ -14,6 +14,9 @@ class MobileNetV1(mv1.MobileNetV1):
         """ Constructor
         """
         super(MobileNetV1, self).__init__()
+        self.dim_in = 3
+        self.spatial_in = [1]
+
         block = mv1.BasicBlock
         layers = cfg.BACKBONE.MV1.LAYERS
         kernel = cfg.BACKBONE.MV1.KERNEL
@@ -27,7 +30,7 @@ class MobileNetV1(mv1.MobileNetV1):
         self.stride = stride
         self.activation = make_act(act=act)
 
-        self.conv1 = nn.Conv2d(3, channels[0], kernel_size=3, stride=2, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(self.dim_in, channels[0], kernel_size=3, stride=2, padding=1, bias=False)
         self.bn1 = make_norm(channels[0], norm=norm)
         self.conv2 = nn.Conv2d(channels[0], channels[0], kernel_size=kernel, stride=1, padding=kernel // 2,
                                groups=channels[0], bias=False)
@@ -42,7 +45,7 @@ class MobileNetV1(mv1.MobileNetV1):
         self.layer4 = self._make_layer(block, channels[5], layers[3], stride=2, dilation=1, kernel=kernel)
 
         self.dim_out = self.stage_out_dim[1:int(math.log(self.stride, 2))]
-        self.spatial_scale = self.stage_out_spatial[1:int(math.log(self.stride, 2))]
+        self.spatial_out = self.stage_out_spatial[1:int(math.log(self.stride, 2))]
 
         del self.avgpool
         del self.fc
@@ -63,7 +66,7 @@ class MobileNetV1(mv1.MobileNetV1):
         x3 = self.layer2(x2)
         x4 = self.layer3(x3)
         x5 = self.layer4(x4)
-            
+
         return [x2, x3, x4, x5]
 
 

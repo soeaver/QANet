@@ -8,6 +8,7 @@ class MaskIoULossComputation(object):
         self.loss_weight = cfg.MASK.MASKIOU.LOSS_WEIGHT
 
     def __call__(self, maskiou_pred, maskiou_gt):
+        maskiou_pred = maskiou_pred[-1]
         maskiou_gt = maskiou_gt.detach()
         maskiou_loss = l2_loss(maskiou_pred, maskiou_gt)
         maskiou_loss = self.loss_weight * maskiou_loss

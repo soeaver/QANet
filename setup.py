@@ -9,7 +9,7 @@ import torch
 from torch.utils.cpp_extension import CUDA_HOME, CppExtension, CUDAExtension
 
 torch_ver = [int(x) for x in torch.__version__.split(".")[:2]]
-assert torch_ver >= [1, 3], "Requires PyTorch >= 1.3"
+assert torch_ver >= [1, 3], "Requires PyTorch >= 1.6"
 
 
 def get_extensions():
@@ -60,29 +60,14 @@ def get_extensions():
 
 
 setup(
-    name="Pet",
-    version='0.4c',
+    name="QANet",
+    version='1.0',
     license='MIT',
-    author="BUPT-PRIV",
-    url="https://github.com/BUPT-PRIV/Pet",
-    description="Pytorch Efficient Toolbox (Pet) for Computer Vision.",
+    author="soeaver",
+    url="https://github.com/soeaver/QANet",
+    description="Quality-Aware Network for Human Parsing.",
     packages=find_packages(exclude=("cfgs", "ckpts", "data", "weights")),
-    python_requires=">=3.5",
-    install_requires=[
-        "termcolor>=1.1",
-        "Pillow",  # you can also use pillow-simd for better performance
-        "yacs>=0.1.6",
-        "pyyaml",
-        "matplotlib",
-        "tqdm>4.29.0",
-        "tensorboard",
-        "numpy",
-        "opencv-python>=3.4.0",
-        "scipy",
-        "six",
-        "h5py",
-        "scikit-image",
-    ],
+    python_requires=">=3.6",
     ext_modules=get_extensions(),
     cmdclass={"build_ext": torch.utils.cpp_extension.BuildExtension},
 )

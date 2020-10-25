@@ -4,11 +4,10 @@ Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun. (2015 CVPR).
 Deep Residual Learning for Image Recognition. 
 Copyright (c) Yang Lu, 2017
 """
-import torch
 import torch.nn as nn
 
 import lib.ops as ops
-from lib.layers import make_norm, BasicBlock, Bottleneck, AlignedBottleneck
+from lib.layers import AlignedBottleneck, BasicBlock, Bottleneck, make_norm
 
 
 class ResNet(nn.Module):

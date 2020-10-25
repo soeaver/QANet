@@ -1,6 +1,4 @@
-import torch
 from torch import nn
-from torch.nn.parameter import Parameter
 
 
 class ECA(nn.Module):

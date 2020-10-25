@@ -1,18 +1,18 @@
-from apex import amp
-
-from torch import nn
+import torch
+import torch.nn as nn
 from torch.autograd import Function
 from torch.autograd.function import once_differentiable
+from torch.cuda.amp import custom_bwd, custom_fwd
 from torch.nn.modules.utils import _pair
 
 from lib.ops import _C
-
 
 INTERPOLATION_METHOD = {"bilinear": 0, "nearest": 1}
 
 
 class _ROIAlign(Function):
     @staticmethod
+    @custom_fwd(cast_inputs=torch.float32)
     def forward(ctx, input, roi, output_size, spatial_scale, sampling_ratio, aligned, interpolation="bilinear"):
         ctx.save_for_backward(roi)
         ctx.output_size = _pair(output_size)
@@ -34,6 +34,7 @@ class _ROIAlign(Function):
         return output
 
     @staticmethod
+    @custom_bwd
     @once_differentiable
     def backward(ctx, grad_output):
         rois, = ctx.saved_tensors
@@ -73,7 +74,6 @@ class ROIAlign(nn.Module):
         self.aligned = aligned
         self.interpolation_method = interpolation
 
-    @amp.float_function
     def forward(self, input, rois):
         """
         Args:

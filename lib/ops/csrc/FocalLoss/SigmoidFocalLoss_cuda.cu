@@ -17,39 +17,36 @@ template <typename T>
 __global__ void SigmoidFocalLossForward(
     const int nthreads,
     const T* logits,
-    const int* targets,
+    const int64_t* targets,
     const int num_classes,
-    const float gamma,
-    const float alpha,
+    const T gamma,
+    const T alpha,
     const int num,
     T* losses) {
   CUDA_1D_KERNEL_LOOP(i, nthreads) {
     int n = i / num_classes;
     int d = i % num_classes; // current class[0~79];
-    int t = targets[n]; // target class [0~79];
+    int64_t t = targets[n]; // target class [0~79];
 
     // Decide it is positive or negative case.
     T c1 = (t == d);
-    T c2 = (t>=0 & t != d);
-
-    T zn = (1.0 - alpha);
-    T zp = (alpha);
+    T c2 = (t >= 0 & t != d);
 
     // p = 1. / 1. + expf(-x); p = sigmoid(x)
-    T  p = 1. / (1. + expf(-logits[i]));
+    T  p = (T)1. / ((T)1. + exp(-logits[i]));
 
     // (1-p)**gamma * log(p) where
-    T term1 = powf((1. - p), gamma) * logf(max(p, FLT_MIN));
+    T term1 = pow(((T)1. - p), gamma) * log(max(p, (T)FLT_MIN));
 
     // p**gamma * log(1-p)
-    T term2 = powf(p, gamma) *
-        (-1. * logits[i] * (logits[i] >= 0) -
-         logf(1. + expf(logits[i] - 2. * logits[i] * (logits[i] >= 0))));
+    // T term2 = pow(p, gamma) * log(max((T)1. - p, (T)FLT_MIN));
+    T term2 = pow(p, gamma) *
+        ((T)-1. * logits[i] * (logits[i] >= (T)0.) -
+         log((T)1. + exp(logits[i] - (T)2. * logits[i] * (logits[i] >= (T)0.))));
 
-    losses[i] = 0.0;
-    losses[i] += -c1 * term1 * zp;
-    losses[i] += -c2 * term2 * zn;
-
+    losses[i] = (T)0.;
+    losses[i] += -c1 * term1 * alpha;
+    losses[i] += -c2 * term2 * ((T)1. - alpha);
   } // CUDA_1D_KERNEL_LOOP
 } // SigmoidFocalLossForward
 
@@ -58,42 +55,42 @@ template <typename T>
 __global__ void SigmoidFocalLossBackward(
     const int nthreads,
     const T* logits,
-    const int* targets,
+    const int64_t* targets,
     const T* d_losses,
     const int num_classes,
-    const float gamma,
-    const float alpha,
+    const T gamma,
+    const T alpha,
     const int num,
     T* d_logits) {
   CUDA_1D_KERNEL_LOOP(i, nthreads) {
 
     int n = i / num_classes;
     int d = i % num_classes; // current class[0~79];
-    int t = targets[n]; // target class [0~79], 80 is background;
+    int64_t t = targets[n]; // target class [0~79], 80 is background;
 
     // Decide it is positive or negative case.
     T c1 = (t == d);
-    T c2 = (t>=0 & t != d);
+    T c2 = (t >= 0 & t != d);
 
-    T zn = (1.0 - alpha);
-    T zp = (alpha);
-    // p = 1. / 1. + expf(-x); p = sigmoid(x)
-    T  p = 1. / (1. + expf(-logits[i]));
+    // p = 1. / 1. + exp(-x); p = sigmoid(x)
+    T  p = (T)1. / ((T)1. + exp(-logits[i]));
 
     // (1-p)**g * (1 - p - g*p*log(p)
-    T term1 = powf((1. - p), gamma) *
-        (1. - p - (p * gamma * logf(max(p, FLT_MIN))));
+    T term1 = pow(((T)1. - p), gamma) *
+        ((T)1. - p - (p * gamma * log(max(p, (T)FLT_MIN))));
 
     // (p**g) * (g*(1-p)*log(1-p) - p)
-    T term2 = powf(p, gamma) *
-        ((-1. * logits[i] * (logits[i] >= 0) -
-         logf(1. + expf(logits[i] - 2. * logits[i] * (logits[i] >= 0)))) *
-         (1. - p) * gamma - p);
-    d_logits[i] = 0.0;
-    d_logits[i] += -c1 * term1 * zp;
-    d_logits[i] += -c2 * term2 * zn;
-    d_logits[i] = d_logits[i] * d_losses[i];
+    // T term_n = pow(p, gamma) *
+    // (gamma * ((T)1. - p) * log(max((T)1. - p, (T)FLT_MIN)) - p);
+    T term2 = pow(p, gamma) *
+        (((T)-1. * logits[i] * (logits[i] >= (T)0.) -
+         log((T)1. + exp(logits[i] - (T)2. * logits[i] * (logits[i] >= (T)0.)))) *
+         ((T)1. - p) * gamma - p);
 
+    d_logits[i] = (T)0.;
+    d_logits[i] += -c1 * term1 * alpha;
+    d_logits[i] += -c2 * term2 * ((T)1. - alpha);
+    d_logits[i] = d_logits[i] * d_losses[i];
   } // CUDA_1D_KERNEL_LOOP
 } // SigmoidFocalLossBackward
 
@@ -130,7 +127,7 @@ at::Tensor SigmoidFocalLoss_forward_cuda(
     SigmoidFocalLossForward<scalar_t><<<grid, block, 0, stream>>>(
         losses_size,
         logits.contiguous().data_ptr<scalar_t>(),
-	      targets.contiguous().data_ptr<int>(),
+	      targets.contiguous().data_ptr<int64_t>(),
         num_classes,
 	      gamma,
 	      alpha,
@@ -177,7 +174,7 @@ at::Tensor SigmoidFocalLoss_backward_cuda(
     SigmoidFocalLossBackward<scalar_t><<<grid, block, 0, stream>>>(
         d_logits_size,
         logits.contiguous().data_ptr<scalar_t>(),
-	      targets.contiguous().data_ptr<int>(),
+	      targets.contiguous().data_ptr<int64_t>(),
 	      d_losses.contiguous().data_ptr<scalar_t>(),
         num_classes,
 	      gamma,

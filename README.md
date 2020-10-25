@@ -1,2 +1,2 @@
 # QANet
-Quality-Aware Network for Human Dense Prediction
+Quality-Aware Network for Human Parsing

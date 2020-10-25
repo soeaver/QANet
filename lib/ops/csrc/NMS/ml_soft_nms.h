@@ -1,6 +1,6 @@
 #pragma once
 #include <torch/types.h>
-  
+
 namespace pet {
 
 std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> ml_soft_nms_cpu(

@@ -1,21 +1,24 @@
 import torch
 
-from instance.modeling.keypoint_head import heads
-from instance.modeling.keypoint_head import outputs
-from instance.modeling.keypoint_head.loss import keypoint_loss_evaluator
 from instance.modeling import registry
+from instance.modeling.keypoint_head import heads, outputs
+from instance.modeling.keypoint_head.loss import keypoint_loss_evaluator
 
 
 class Keypoint(torch.nn.Module):
-    def __init__(self, cfg, dim_in, spatial_scale):
+    def __init__(self, cfg, dim_in, spatial_in):
         super(Keypoint, self).__init__()
-        self.spatial_scale = spatial_scale
+        self.dim_in = dim_in
+        self.spatial_in = spatial_in
         self.use_target_weight = cfg.KEYPOINT.USE_TARGET_WEIGHT
 
         head = registry.KEYPOINT_HEADS[cfg.KEYPOINT.KEYPOINT_HEAD]
-        self.Head = head(cfg, dim_in, self.spatial_scale)
+        self.Head = head(cfg, self.dim_in, self.spatial_in)
         output = registry.KEYPOINT_OUTPUTS[cfg.KEYPOINT.KEYPOINT_OUTPUT]
-        self.Output = output(cfg, self.Head.dim_out, self.Head.spatial_scale)
+        self.Output = output(cfg, self.Head.dim_out, self.Head.spatial_out)
+
+        self.dim_out = self.Output.dim_out
+        self.spatial_out = self.Output.spatial_out
 
         self.loss_evaluator = keypoint_loss_evaluator(cfg)
 
@@ -27,17 +30,18 @@ class Keypoint(torch.nn.Module):
 
     def _forward_train(self, conv_features, targets=None):
         keypoint_feat = self.Head(conv_features)
-        output = self.Output(keypoint_feat)
+        logits = self.Output(keypoint_feat)
 
         loss_kp = self.loss_evaluator(
-            output, targets['keypoints'],
+            logits, targets['keypoints'],
             targets['keypoints_weight'] if self.use_target_weight else None
         )
         return None, dict(loss_kp=loss_kp)
 
     def _forward_test(self, conv_features, targets=None):
         keypoint_feat = self.Head(conv_features)
-        output = self.Output(keypoint_feat)
+        logits = self.Output(keypoint_feat)
+        kpt_logits = logits[-1]
 
-        return dict(probs=output, kpt_iou_scores=torch.ones(output.size()[0], dtype=torch.float32,
-                                                            device=output.device)), {}
+        return dict(probs=kpt_logits, kpt_iou_scores=torch.ones(kpt_logits.size()[0], dtype=torch.float32,
+                                                            device=kpt_logits.device)), {}

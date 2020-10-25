@@ -1,6 +1,7 @@
 from torch import nn
 
-from .swish import Swish, H_Sigmoid, H_Swish
+from .mish import Mish
+from .swish import Swish
 
 
 def make_act(act='ReLU', **kwargs):
@@ -13,10 +14,11 @@ def make_act(act='ReLU', **kwargs):
         "ReLU6": nn.ReLU6(inplace=inplace),
         "PReLU": nn.PReLU(),
         "LeakyReLU": nn.LeakyReLU(inplace=inplace),
+        "H_Sigmoid": nn.Hardsigmoid(),
         "Sigmoid": nn.Sigmoid(),
-        "H_Sigmoid": H_Sigmoid(),
+        "H_Swish": nn.Hardswish(),
         "Swish": Swish(),
-        "H_Swish": H_Swish(),
+        "Mish": Mish(),
     }[act]
 
     return act

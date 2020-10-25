@@ -3,11 +3,11 @@ import torch.nn as nn
 
 import instance.modeling.backbone
 import instance.modeling.fpn
-from instance.modeling.mask_head.mask import Mask
+from instance.modeling import registry
 from instance.modeling.keypoint_head.keypoint import Keypoint
+from instance.modeling.mask_head.mask import Mask
 from instance.modeling.parsing_head.parsing import Parsing
 from instance.modeling.uv_head.uv import UV
-from instance.modeling import registry
 
 
 class Generalized_CNN(nn.Module):
@@ -18,29 +18,29 @@ class Generalized_CNN(nn.Module):
         conv_body = registry.BACKBONES[self.cfg.BACKBONE.CONV_BODY]
         self.Conv_Body = conv_body(self.cfg)
         self.dim_in = self.Conv_Body.dim_out
-        self.spatial_scale = self.Conv_Body.spatial_scale
+        self.spatial_in = self.Conv_Body.spatial_out
 
         # Feature Pyramid Networks
         if self.cfg.MODEL.FPN_ON:
             fpn_body = registry.FPN_BODY[self.cfg.FPN.BODY]
-            self.Conv_Body_FPN = fpn_body(self.cfg, self.dim_in, self.spatial_scale)
+            self.Conv_Body_FPN = fpn_body(self.cfg, self.dim_in, self.spatial_in)
             self.dim_in = self.Conv_Body_FPN.dim_out
-            self.spatial_scale = self.Conv_Body_FPN.spatial_scale
+            self.spatial_in = self.Conv_Body_FPN.spatial_out
         else:
             self.dim_in = self.dim_in[-1:]
-            self.spatial_scale = self.spatial_scale[-1:]
+            self.spatial_in = self.spatial_in[-1:]
 
         if self.cfg.MODEL.MASK_ON:
-            self.Mask = Mask(self.cfg, self.dim_in, self.spatial_scale)
+            self.Mask = Mask(self.cfg, self.dim_in, self.spatial_in)
 
         if self.cfg.MODEL.KEYPOINT_ON:
-            self.Keypoint = Keypoint(self.cfg, self.dim_in, self.spatial_scale)
+            self.Keypoint = Keypoint(self.cfg, self.dim_in, self.spatial_in)
 
         if self.cfg.MODEL.PARSING_ON:
-            self.Parsing = Parsing(self.cfg, self.dim_in, self.spatial_scale)
+            self.Parsing = Parsing(self.cfg, self.dim_in, self.spatial_in)
 
         if self.cfg.MODEL.UV_ON:
-            self.UV = UV(self.cfg, self.dim_in, self.spatial_scale)
+            self.UV = UV(self.cfg, self.dim_in, self.spatial_in)
 
     def forward(self, x, targets=None):
         # Backbone

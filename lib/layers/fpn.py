@@ -1,8 +1,7 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from lib.layers.wrappers import make_conv, make_norm, make_act
+from lib.layers.wrappers import make_act, make_conv, make_norm
 
 
 class FPN(nn.Module):
@@ -10,8 +9,10 @@ class FPN(nn.Module):
         super(FPN, self).__init__()
         dim_in = kwargs.pop("dim_in", [256, 512, 1024, 2048])
         spatial_scale = kwargs.pop("spatial_scale", [1/4, 1/8, 1/16, 1/32])
+        keep_backbone = kwargs.pop("keep_backbone", False)
         fpn_dim = kwargs.pop("fpn_dim", 256)
         use_c5 = kwargs.pop("use_c5", True)
+        m_only = kwargs.pop("m_only", False)
         norm = kwargs.pop("norm", "")
         min_level = kwargs.pop("min_level", 2)
         max_level = kwargs.pop("max_level", 6)
@@ -21,7 +22,9 @@ class FPN(nn.Module):
 
         self.dim_in = dim_in[-1]  # 2048
         self.spatial_scale = spatial_scale
+        self.keep_backbone = keep_backbone
         self.use_c5 = use_c5
+        self.m_only = m_only
         self.max_level = max_level
         self.lowest_bk_lvl = lowest_bk_lvl
         self.highest_bk_lvl = highest_bk_lvl
@@ -47,7 +50,7 @@ class FPN(nn.Module):
             elif isinstance(m, nn.Linear):
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.constant_(m.bias, 0)
-                
+
     def _make_layer(self, dim_in, fpn_dim, norm, act=""):
         # P5 in
         self.p5_in = make_conv(self.dim_in, fpn_dim, kernel_size=1, norm=make_norm(fpn_dim, norm=norm),
@@ -90,14 +93,17 @@ class FPN(nn.Module):
     def forward(self, x):
         c5_out = x[-1]
         px = self.p5_in(c5_out)
-        fpn_output_blobs = [self.p5_out(px)]  # [P5]
+        fpn_output_blobs = [self.p5_out(px)] if not self.m_only else [px]  # [P5] or [M5]
         for i in range(self.num_backbone_stages - 1):  # [P5 - P2]
             cx_out = x[-i - 2]  # C4, C3, C2
             cx_out = self.fpn_in[i](cx_out)  # lateral branch
             if cx_out.size()[2:] != px.size()[2:]:
                 px = F.interpolate(px, scale_factor=2, mode='nearest')
             px = cx_out + px
-            fpn_output_blobs.insert(0, self.fpn_out[i](px))  # [P2 - P5]
+            if self.m_only:
+                fpn_output_blobs.insert(0, px)  # [M2 - M5]
+            else:
+                fpn_output_blobs.insert(0, self.fpn_out[i](px))  # [P2 - P5]
 
         if hasattr(self, 'maxpool_p6'):
             fpn_output_blobs.append(self.maxpool_p6(fpn_output_blobs[-1]))  # [P2 - P6]
@@ -110,6 +116,9 @@ class FPN(nn.Module):
             fpn_output_blobs.append(self.extra_pyramid_modules[0](p6_in))
             for module in self.extra_pyramid_modules[1:]:
                 fpn_output_blobs.append(module(F.relu(fpn_output_blobs[-1])))  # [P2 - P6, P7]
+
+        if self.keep_backbone:
+            fpn_output_blobs.append(x)
 
         # use all levels
         return fpn_output_blobs  # [P2 - P6]

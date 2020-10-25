@@ -1,10 +1,9 @@
 import time
-from typing import Optional
 from collections import OrderedDict
 
 import torch
 
-from .misc import logging_rank
+from lib.utils.misc import logging_rank
 
 
 class Timer:
@@ -85,7 +84,7 @@ class _DebugTimer(object):
     Track vital debug statistics.
 
     Usage:
-        1. from pet.utils.timer import debug_timer
+        1. from utils.timer import debug_timer
 
         2. with debug_timer('timer1'):
                code1
@@ -99,7 +98,7 @@ class _DebugTimer(object):
            debug_timer.timer3_toc()
 
         3. debug_timer.log()
-    
+
     TODO: multithreading support
     '''
     __TIMER__ = None

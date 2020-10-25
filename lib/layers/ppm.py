@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from lib.layers.wrappers import make_conv, make_norm, make_act
+from lib.layers.wrappers import make_act, make_conv, make_norm
 
 
 class PPM(nn.Module):

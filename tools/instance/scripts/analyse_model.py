@@ -1,15 +1,16 @@
-import os
-import sys
 import argparse
 import os.path as osp
-import torch
+import sys
+
+from lib.utils.analyser import Analyser
+from lib.utils.misc import logging_rank
+
+from instance.core.config import get_cfg, infer_cfg
+from instance.modeling.model_builder import Generalized_CNN
+
 
 sys.path.insert(0, osp.join(osp.abspath(osp.dirname(osp.dirname(__file__))), '../../'))
-from pet.lib.utils.misc import mkdir_p, logging_rank
 
-from pet.instance.core.config import get_cfg, infer_cfg
-from pet.instance.modeling.model_builder import Generalized_CNN
-from pet.lib.utils.analyser import Analyser
 
 # Parse arguments
 parser = argparse.ArgumentParser(description='Pet Model Testing')

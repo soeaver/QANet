@@ -1,10 +1,10 @@
 import logging
-import torch
 
+import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 
-from .comm import synchronize, _LOCAL_PROCESS_GROUP
+from lib.utils.comm import _LOCAL_PROCESS_GROUP, synchronize
 
 
 def _find_free_port():

@@ -1,11 +1,11 @@
 import math
-
 import torch.nn as nn
 import torch.nn.functional as F
 
 import lib.backbone.mobilenet_v3 as mv3
-from lib.layers import make_norm, make_act, InvertedResidual
-from lib.utils.net import make_divisible, convert_conv2convsamepadding_model
+from lib.layers import InvertedResidual, make_act, make_norm
+from lib.utils.net import convert_conv2convsamepadding_model, make_divisible
+
 from instance.modeling import registry
 
 
@@ -14,6 +14,9 @@ class MobileNetV3(mv3.MobileNetV3):
         """ Constructor
         """
         super(MobileNetV3, self).__init__()
+        self.dim_in = 3
+        self.spatial_in = [1]
+
         block = InvertedResidual
         setting = cfg.BACKBONE.MV3.SETTING
         widen_factor = cfg.BACKBONE.MV3.WIDEN_FACTOR
@@ -36,7 +39,7 @@ class MobileNetV3(mv3.MobileNetV3):
         self.activation = make_act(act=act if layers_cfg[0][0][3] else 'ReLU')
 
         self.inplanes = make_divisible(layers_cfg[0][0][1] * widen_factor, 8)
-        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=layers_cfg[0][0][0], stride=layers_cfg[0][0][4],
+        self.conv1 = nn.Conv2d(self.dim_in, self.inplanes, kernel_size=layers_cfg[0][0][0], stride=layers_cfg[0][0][4],
                                padding=layers_cfg[0][0][0] // 2, bias=False)
         self.bn1 = make_norm(self.inplanes, eps=self.bn_eps, norm=norm)
 
@@ -47,7 +50,7 @@ class MobileNetV3(mv3.MobileNetV3):
         self.layer4 = self._make_layer(block, layers_cfg[5], dilation=1)
 
         self.dim_out = self.stage_out_dim[1:int(math.log(self.stride, 2))]
-        self.spatial_scale = self.stage_out_spatial[1:int(math.log(self.stride, 2))]
+        self.spatial_out = self.stage_out_spatial[1:int(math.log(self.stride, 2))]
 
         del self.last_stage
         del self.avgpool

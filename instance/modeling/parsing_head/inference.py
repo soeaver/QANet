@@ -91,7 +91,6 @@ def get_parsing_results(cfg, probs, targets):
     ims_w_max = max([target.size[0] for target in targets])
     ims_h_max = max([target.size[1] for target in targets])
     all_boxes = torch.cat([target.ori_bbox for target in targets]).to(device)
-
     N, C, H, W = probs[0].shape
     value_thresh = 1.0 / C
 
@@ -102,25 +101,33 @@ def get_parsing_results(cfg, probs, targets):
     chunks = torch.chunk(torch.arange(N, device=device), num_chunks)
     ims_probs = paste_parsing_aug(cfg, probs, all_boxes, ims_h_max, ims_w_max, chunks)
 
-    parsings_max, parsings_idx = torch.max(ims_probs, dim=1)
-    ims_parsings = parsings_idx.to(dtype=torch.uint8) * (parsings_max >= value_thresh).to(dtype=torch.bool)
-    parsing_index = (parsings_max >= cfg.PARSING.PIXEL_SCORE_TH).to(dtype=torch.bool)
-    instance_pixel_score = torch.sum(parsings_max * parsing_index, dim=[1, 2]).to(dtype=torch.float32) / torch. \
-        clamp(torch.sum(parsing_index, dim=[1, 2]).to(dtype=torch.float32), min=1e-6)
+    inst_max, inst_idx = torch.max(ims_probs, dim=1)
+    ims_parsings = inst_idx.to(dtype=torch.uint8) * (inst_max >= value_thresh).to(dtype=torch.bool)
 
-    part_pixel_score = torch.ones((N, C - 1), device=device, dtype=torch.float32)
+    # high confidence mask (hcm)
+    inst_hcm = (inst_max >= cfg.PARSING.PIXEL_SCORE_TH).to(dtype=torch.bool)
+    # high confidence value (hcv)
+    inst_hcv = torch.sum(inst_max * inst_hcm, dim=[1, 2]).to(dtype=torch.float32)
+    inst_hcm_num = torch.clamp(torch.sum(inst_hcm, dim=[1, 2]).to(dtype=torch.float32), min=1e-6)
+
+    instance_pixel_scores = inst_hcv / inst_hcm_num
+
+    category_pixel_scores = torch.ones((N, C - 1), device=device, dtype=torch.float32)
     for c in range(1, cfg.PARSING.NUM_PARSING):
-        part_max = parsings_max * (parsings_idx == c).to(dtype=torch.bool)
-        part_index = (part_max >= cfg.PARSING.PIXEL_SCORE_TH).to(dtype=torch.bool)
-        part_pixel_score[:, c - 1] = torch.sum(part_max * part_index, dim=[1, 2]).to(dtype=torch.float32) / torch. \
-            clamp(torch.sum(part_index, dim=[1, 2]).to(dtype=torch.float32), min=1e-6)
+        cate_max = inst_max * (inst_idx == c).to(dtype=torch.bool)
+
+        cate_hcm = (cate_max >= cfg.PARSING.PIXEL_SCORE_TH).to(dtype=torch.bool)
+        cate_hcv = torch.sum(cate_max * cate_hcm, dim=[1, 2]).to(dtype=torch.float32)
+        cate_hcm_num = torch.clamp(torch.sum(cate_hcm, dim=[1, 2]).to(dtype=torch.float32), min=1e-6)
+
+        category_pixel_scores[:, c - 1] = cate_hcv / cate_hcm_num
 
     boxes_per_image = [len(target) for target in targets]
     ims_parsings = ims_parsings.split(boxes_per_image, dim=0)
     ims_parsings = [im_parsings.cpu() for im_parsings in ims_parsings]
-    instance_pixel_score = instance_pixel_score.split(boxes_per_image, dim=0)
-    instance_pixel_score = [_.cpu() for _ in instance_pixel_score]
-    part_pixel_score = part_pixel_score.split(boxes_per_image, dim=0)
-    part_pixel_score = [_.cpu() for _ in part_pixel_score]
+    instance_pixel_scores = instance_pixel_scores.split(boxes_per_image, dim=0)
+    instance_pixel_scores = [_.cpu() for _ in instance_pixel_scores]
+    category_pixel_scores = category_pixel_scores.split(boxes_per_image, dim=0)
+    category_pixel_scores = [_.cpu() for _ in category_pixel_scores]
 
-    return ims_parsings, instance_pixel_score, part_pixel_score
+    return ims_parsings, instance_pixel_scores, category_pixel_scores

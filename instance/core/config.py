@@ -8,7 +8,7 @@ _C = CN()
 # Misc options
 # --------------------------------------------------------------------------- #
 # Version of Pet
-_C.VERSION = '0.4a'
+_C.VERSION = '0.6'
 
 # Device for training or testing
 # E.g., 'cuda' for using GPU, 'cpu' for using CPU
@@ -30,10 +30,10 @@ _C.PIXEL_STDS = [1.0, 1.0, 1.0]
 _C.CLEAN_UP = True
 
 # Set True to enable model analysis
-_C.MODEL_ANALYSE = False
+_C.MODEL_ANALYSE = True
 
 # Directory for saving checkpoints and loggers
-_C.CKPT = 'ckpts/mscoco/simple_R-50-1x64d-D3K4C256_256x192_adam_1x'
+_C.CKPT = 'ckpts/CIHP/QANet/QANet_R-50c_512x384_1x/QANet_R-50c_512x384_1x.yaml'
 
 # Display the log per iteration
 _C.DISPLAY_ITER = 20
@@ -61,11 +61,6 @@ _C.IMAGE_FORMAT = "rgb"
 # ---------------------------------------------------------------------------- #
 _C.MODEL = CN()
 
-# The type of model to use
-# The string must match a function in the modeling.model_builder module
-# (e.g., 'generalized_instance', ...)
-_C.MODEL.TYPE = 'generalized_instance'
-
 # FPN is enabled if True
 _C.MODEL.FPN_ON = False
 
@@ -82,7 +77,7 @@ _C.MODEL.PARSING_ON = False
 _C.MODEL.UV_ON = False
 
 # TODO
-# Indicates the model makes part bbox predictions (as in Hier R-CNN)
+# Indicates the model makes part bbox predictions
 _C.MODEL.HIER_ON = False
 
 
@@ -289,7 +284,7 @@ _C.TRAIN.USE_TENSORBOARD = False
 _C.TEST = CN()
 
 # Initialize network with weights from this .pth file
-_C.TEST.WEIGHTS = ''
+_C.TEST.WEIGHTS = ""
 
 # Number of Python threads to use for the data loader during training
 _C.TEST.LOADER_THREADS = 4
@@ -326,8 +321,8 @@ _C.TEST.FREQUENCY_EPOCHS = -1
 _C.TEST.IMAGE_THRESH = 0.0
 
 # detection results of instance for testing
-#  '' means using GT bbox
-_C.TEST.INSTANCE_BBOX_FILE = ''
+#  "" means using GT bbox
+_C.TEST.INSTANCE_BBOX_FILE = ""
 
 # ---------------------------------------------------------------------------- #
 # Precise BN
@@ -399,7 +394,7 @@ _C.BACKBONE.HRNET.NORM = 'BN'
 
 # Type of context module in each block
 # E.g., 'SE', 'GCB', ...
-_C.BACKBONE.HRNET.STAGE_WITH_CTX = ('', '', '', '')
+_C.BACKBONE.HRNET.STAGE_WITH_CTX = ("", "", "", "")
 
 # ---------------------------------------------------------------------------- #
 # MobileNet V1 options
@@ -524,7 +519,7 @@ _C.BACKBONE.RESNET.NORM = 'BN'
 
 # Type of context module in each block
 # E.g., 'SE', 'GCB', ...
-_C.BACKBONE.RESNET.STAGE_WITH_CTX = ('', '', '', '')
+_C.BACKBONE.RESNET.STAGE_WITH_CTX = ("", "", "", "")
 
 # Network output stride, 32:c5, 16:c4, 8:c3
 _C.BACKBONE.RESNET.STRIDE = 32
@@ -570,7 +565,7 @@ _C.BACKBONE.RESNEXT.NORM = 'BN'
 
 # Type of context module in each block
 # E.g., 'SE', 'GCB', ...
-_C.BACKBONE.RESNEXT.STAGE_WITH_CTX = ('', '', '', '')
+_C.BACKBONE.RESNEXT.STAGE_WITH_CTX = ("", "", "", "")
 
 
 # ---------------------------------------------------------------------------- #
@@ -600,7 +595,7 @@ _C.FPN.EXTRA_CONV_LEVELS = False
 
 # Type of normalization in the FPN-specific layers (lateral, etc.)
 # E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.FPN.NORM = ''
+_C.FPN.NORM = ""
 
 # Use Weight Standardization in the FPN-specific layers (lateral, etc.)
 _C.FPN.USE_WS = False
@@ -621,7 +616,7 @@ _C.FPN.PANOPTIC.USE_LATENC = False
 
 # Type of normalization in the NASFPN layers
 # E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.FPN.PANOPTIC.NORM = ''
+_C.FPN.PANOPTIC.NORM = ""
 
 # ---------------------------------------------------------------------------- #
 # FPN deconvx body options
@@ -657,7 +652,7 @@ _C.FPN.LATENC.CONV_DIM = 256
 
 # Type of normalization in the NASFPN layers
 # E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.FPN.LATENC.NORM = ''
+_C.FPN.LATENC.NORM = ""
 
 
 # ---------------------------------------------------------------------------- #
@@ -691,29 +686,56 @@ _C.MASK.QUALITY_WEIGHTS = (1.0, 1.0, 0.0)
 _C.MASK.PIXEL_SCORE_TH = 0.25
 
 # ---------------------------------------------------------------------------- #
+# Mask gce head options
+# ---------------------------------------------------------------------------- #
+_C.MASK.GCE_HEAD = CN()
+
+# Hidden Conv layer dimension
+_C.MASK.GCE_HEAD.CONV_DIM = 512
+
+# Dimension for ASPP
+_C.MASK.GCE_HEAD.ASPP_DIM = 256
+
+# Dilation for ASPP
+_C.MASK.GCE_HEAD.ASPP_DILATION = (6, 12, 18)
+
+# Number of stacked Conv layers in GCE head before
+_C.MASK.GCE_HEAD.NUM_CONVS_BEFORE_ASPP = 0
+
+# Number of stacked Conv layers in GCE head after
+_C.MASK.GCE_HEAD.NUM_CONVS_AFTER_ASPP = 0
+
+# Use NonLocal in the Keypoint gce head
+_C.MASK.GCE_HEAD.USE_NL = False
+
+# Reduction ration of nonlocal
+_C.MASK.GCE_HEAD.NL_RATIO = 1.0
+
+# Type of normalization in the PARSING gce head
+# E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
+_C.MASK.GCE_HEAD.NORM = ""
+
+# ---------------------------------------------------------------------------- #
 # Mask IoU options
 # ---------------------------------------------------------------------------- #
 _C.MASK.MASKIOU = CN()
 
 # The head of Mask IoU to use
 # (e.g., "convx_head")
-_C.MASK.MASKIOU.MASKIOU_HEAD = "convx_head"
+_C.MASK.MASKIOU.MASKIOU_HEAD = "maskiou_head"
 
 # Output module of Mask IoU head
-_C.MASK.MASKIOU.MASKIOU_OUTPUT = "linear_output"
+_C.MASK.MASKIOU.MASKIOU_OUTPUT = "maskiou_output"
 
 # Number of stacked Conv layers in Mask IoU head
-_C.MASK.MASKIOU.NUM_STACKED_CONVS = 2
+_C.MASK.MASKIOU.NUM_CONVS = 2
 
 # Hidden Conv layer dimension of Mask IoU head
-_C.MASK.MASKIOU.CONV_DIM = 64
-
-# Hidden MLP layer dimension of Mask IoU head
-_C.MASK.MASKIOU.MLP_DIM = 128
+_C.MASK.MASKIOU.CONV_DIM = 512
 
 # Type of normalization in the MASK IoU head
 # E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.MASK.MASKIOU.NORM = ''
+_C.MASK.MASKIOU.NORM = ""
 
 # Loss weight for Mask IoU head
 _C.MASK.MASKIOU.LOSS_WEIGHT = 1.0
@@ -766,17 +788,17 @@ _C.KEYPOINT.GCE_HEAD = CN()
 # Hidden Conv layer dimension
 _C.KEYPOINT.GCE_HEAD.CONV_DIM = 512
 
-# Dimension for 
-_C.KEYPOINT.GCE_HEAD._DIM = 256
+# Dimension for ASPP
+_C.KEYPOINT.GCE_HEAD.ASPP_DIM = 256
 
-# Dilation for 
-_C.KEYPOINT.GCE_HEAD._DILATION = (6, 12, 18)
+# Dilation for ASPP
+_C.KEYPOINT.GCE_HEAD.ASPP_DILATION = (6, 12, 18)
 
 # Number of stacked Conv layers in GCE head before 
-_C.KEYPOINT.GCE_HEAD.NUM_CONVS_BEFORE_ = 0
+_C.KEYPOINT.GCE_HEAD.NUM_CONVS_BEFORE_ASPP = 0
 
 # Number of stacked Conv layers in GCE head after 
-_C.KEYPOINT.GCE_HEAD.NUM_CONVS_AFTER_ = 0
+_C.KEYPOINT.GCE_HEAD.NUM_CONVS_AFTER_ASPP = 0
 
 # Use NonLocal in the Keypoint gce head
 _C.KEYPOINT.GCE_HEAD.USE_NL = False
@@ -786,7 +808,7 @@ _C.KEYPOINT.GCE_HEAD.NL_RATIO = 1.0
 
 # Type of normalization in the KEYPOINT gce head
 # E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.KEYPOINT.GCE_HEAD.NORM = ''
+_C.KEYPOINT.GCE_HEAD.NORM = ""
 
 
 # ---------------------------------------------------------------------------- #
@@ -850,17 +872,17 @@ _C.PARSING.GCE_HEAD = CN()
 # Hidden Conv layer dimension
 _C.PARSING.GCE_HEAD.CONV_DIM = 512
 
-# Dimension for 
-_C.PARSING.GCE_HEAD._DIM = 256
+# Dimension for ASPP
+_C.PARSING.GCE_HEAD.ASPP_DIM = 256
 
-# Dilation for 
-_C.PARSING.GCE_HEAD._DILATION = (6, 12, 18)
+# Dilation for ASPP
+_C.PARSING.GCE_HEAD.ASPP_DILATION = (6, 12, 18)
 
 # Number of stacked Conv layers in GCE head before 
-_C.PARSING.GCE_HEAD.NUM_CONVS_BEFORE_ = 0
+_C.PARSING.GCE_HEAD.NUM_CONVS_BEFORE_ASPP = 0
 
 # Number of stacked Conv layers in GCE head after 
-_C.PARSING.GCE_HEAD.NUM_CONVS_AFTER_ = 0
+_C.PARSING.GCE_HEAD.NUM_CONVS_AFTER_ASPP = 0
 
 # Use NonLocal in the Keypoint gce head
 _C.PARSING.GCE_HEAD.USE_NL = False
@@ -870,7 +892,7 @@ _C.PARSING.GCE_HEAD.NL_RATIO = 1.0
 
 # Type of normalization in the PARSING gce head
 # E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.PARSING.GCE_HEAD.NORM = ''
+_C.PARSING.GCE_HEAD.NORM = ""
 
 # ---------------------------------------------------------------------------- #
 # Parsing IoU options
@@ -878,14 +900,11 @@ _C.PARSING.GCE_HEAD.NORM = ''
 _C.PARSING.PARSINGIOU = CN()
 
 # The head of Parsing IoU to use
-# (e.g., "convx_head")
+# (e.g., "parsingiou_head")
 _C.PARSING.PARSINGIOU.PARSINGIOU_HEAD = "parsingiou_head"
 
 # Output module of Parsing IoU head
 _C.PARSING.PARSINGIOU.PARSINGIOU_OUTPUT = "parsingiou_output"
-
-# Use class-aware iou as targets
-_C.PARSING.PARSINGIOU.USE_CLA_IOU = False
 
 # Number of stacked Conv layers in Parsing IoU head
 _C.PARSING.PARSINGIOU.NUM_CONVS = 2
@@ -895,7 +914,7 @@ _C.PARSING.PARSINGIOU.CONV_DIM = 512
 
 # Type of normalization in the PARSING IoU head
 # E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.PARSING.PARSINGIOU.NORM = ''
+_C.PARSING.PARSINGIOU.NORM = ""
 
 # Loss weight for Parsing IoU head
 _C.PARSING.PARSINGIOU.LOSS_WEIGHT = 1.0
@@ -912,13 +931,13 @@ _C.PARSING.QUALITY.QUALITY_HEAD = "quality_head"
 # Output module of Quality head
 _C.PARSING.QUALITY.QUALITY_OUTPUT = "quality_output"
 
-# Number of share Conv layers in the Parsing R-CNN decouple convx head
+# Number of share Conv layers in the Quality head
 _C.PARSING.QUALITY.NUM_SHARE_CONVS = 2
 
-# Number of parsing Conv layers in the Parsing R-CNN decouple convx head
+# Number of parsing Conv layers in the Quality head
 _C.PARSING.QUALITY.NUM_PARSING_CONVS = 1
 
-# Number of mask Conv layers in the Parsing R-CNN decouple convx head
+# Number of mask Conv layers in the Quality head
 _C.PARSING.QUALITY.NUM_IOU_CONVS = 2
 
 # Hidden Conv layer dimension of Quality head
@@ -929,7 +948,7 @@ _C.PARSING.QUALITY.IOU_CONV_DIM = 512
 
 # Type of normalization in the Quality head
 # E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.PARSING.QUALITY.NORM = ''
+_C.PARSING.QUALITY.NORM = ""
 
 # Middle conv dim in quality module
 _C.PARSING.QUALITY.QUALITY_DIM = 256
@@ -984,7 +1003,7 @@ _C.UV.INDEX_THRESH = 0.9
 
 # UV evaluating calc_mode to use
 # (e.g., "GPSm", "GPS", "IOU")
-_C.UV.CALC_MODE = 'GPSm'
+_C.UV.CALC_MODE = "GPSm"
 
 # ---------------------------------------------------------------------------- #
 # UV gce head options
@@ -994,17 +1013,17 @@ _C.UV.GCE_HEAD = CN()
 # Hidden Conv layer dimension
 _C.UV.GCE_HEAD.CONV_DIM = 512
 
-# Dimension for 
-_C.UV.GCE_HEAD._DIM = 256
+# Dimension for ASPP
+_C.UV.GCE_HEAD.ASPP_DIM = 256
 
-# Dilation for 
-_C.UV.GCE_HEAD._DILATION = (6, 12, 18)
+# Dilation for ASPP
+_C.UV.GCE_HEAD.ASPP_DILATION = (6, 12, 18)
 
 # Number of stacked Conv layers in GCE head before 
-_C.UV.GCE_HEAD.NUM_CONVS_BEFORE_ = 0
+_C.UV.GCE_HEAD.NUM_CONVS_BEFORE_ASPP = 0
 
 # Number of stacked Conv layers in GCE head after 
-_C.UV.GCE_HEAD.NUM_CONVS_AFTER_ = 0
+_C.UV.GCE_HEAD.NUM_CONVS_AFTER_ASPP = 0
 
 # Use NonLocal in the UV gce head
 _C.UV.GCE_HEAD.USE_NL = False
@@ -1014,7 +1033,7 @@ _C.UV.GCE_HEAD.NL_RATIO = 1.0
 
 # Type of normalization in the UV gce head
 # E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.UV.GCE_HEAD.NORM = ''
+_C.UV.GCE_HEAD.NORM = ""
 
 
 # ---------------------------------------------------------------------------- #

@@ -1,11 +1,10 @@
 import numpy as np
 import pycocotools.mask as mask_util
-
 import torch
 
-from lib.datasets.structures.instance_box import InstanceBox
 from instance.core.config import get_cfg, infer_cfg
 from instance.core.test import TestEngine
+from lib.data.structures.instance_box import InstanceBox
 
 
 class Inference(object):
@@ -96,4 +95,3 @@ class Inference(object):
             ims_uvs = None
 
         return ims_dets, ims_labels, im_masks, ims_kpts, ims_parss, ims_uvs
-

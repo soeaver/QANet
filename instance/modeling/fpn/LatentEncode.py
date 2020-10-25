@@ -2,15 +2,16 @@ import torch
 import torch.nn as nn
 
 from lib.layers import make_conv, make_norm
+
 from instance.modeling import registry
 
 
 @registry.FPN_BODY.register("latent_encode")
 class LatentEncode(nn.Module):
-    def __init__(self, cfg, dim_in, spatial_scale):
+    def __init__(self, cfg, dim_in, spatial_in):
         super().__init__()
         self.dim_in = dim_in[-1]  # 2048
-        self.spatial_scale = spatial_scale
+        self.spatial_in = spatial_in
 
         latent_dim = cfg.FPN.LATENC.CONV_DIM  # 256
         norm = cfg.FPN.LATENC.NORM
@@ -30,7 +31,7 @@ class LatentEncode(nn.Module):
         )
 
         self.dim_out = [latent_dim]
-        self.spatial_scale = [-1]
+        self.spatial_out = [-1]
 
         self._init_weights()
 

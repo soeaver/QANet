@@ -1,7 +1,4 @@
 import torch
-import torch.nn as nn
-
-from .misc import logging_rank
 
 
 class Optimizer(object):

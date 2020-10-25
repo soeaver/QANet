@@ -5,6 +5,7 @@ import torch
 from torch import nn
 from torch.autograd import Function, Variable
 from torch.autograd.function import once_differentiable
+from torch.cuda.amp import custom_bwd, custom_fwd
 from torch.nn.modules.utils import _pair
 
 from lib.ops import _C
@@ -12,6 +13,7 @@ from lib.ops import _C
 
 class _DeformConv(Function):
     @staticmethod
+    @custom_fwd(cast_inputs=torch.float32)
     def forward(
             ctx,
             input,
@@ -76,6 +78,7 @@ class _DeformConv(Function):
         return output
 
     @staticmethod
+    @custom_bwd
     @once_differentiable
     def backward(ctx, grad_output):
         input, offset, weight, bias = ctx.saved_tensors

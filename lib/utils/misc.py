@@ -1,15 +1,13 @@
 import errno
+import functools
+import logging
 import os
 import sys
-import logging
-import functools
-import numpy as np
 from six.moves import cPickle as pickle
 
 import torch
-import torch.distributed as dist
 
-from .comm import is_main_process
+from lib.utils.comm import is_main_process
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("misc")

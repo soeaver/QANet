@@ -1,8 +1,8 @@
-from apex import amp
-
-from torch import nn
+import torch
+import torch.nn as nn
 from torch.autograd import Function
 from torch.autograd.function import once_differentiable
+from torch.cuda.amp import custom_bwd, custom_fwd
 from torch.nn.modules.utils import _pair
 
 from lib.ops import _C
@@ -10,6 +10,7 @@ from lib.ops import _C
 
 class _ROIPool(Function):
     @staticmethod
+    @custom_fwd(cast_inputs=torch.float32)
     def forward(ctx, input, roi, output_size, spatial_scale):
         ctx.output_size = _pair(output_size)
         ctx.spatial_scale = spatial_scale
@@ -21,6 +22,7 @@ class _ROIPool(Function):
         return output
 
     @staticmethod
+    @custom_bwd
     @once_differentiable
     def backward(ctx, grad_output):
         input, rois, argmax = ctx.saved_tensors
@@ -52,7 +54,6 @@ class ROIPool(nn.Module):
         self.output_size = _pair(output_size)
         self.spatial_scale = spatial_scale
 
-    @amp.float_function
     def forward(self, input, rois):
         return roi_pool(input, rois, self.output_size, self.spatial_scale)
 

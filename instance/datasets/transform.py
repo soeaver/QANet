@@ -1,4 +1,4 @@
-from lib.datasets.transforms import transforms as T
+from lib.data.transforms import transforms as T
 
 
 def build_transforms(cfg, is_train=True):

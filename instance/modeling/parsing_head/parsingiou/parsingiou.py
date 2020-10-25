@@ -1,25 +1,27 @@
 import torch
 from torch import nn
 
-from lib.datasets.structures.bounding_box import BoxList
-from instance.modeling.parsing_head.parsingiou import heads
-from instance.modeling.parsing_head.parsingiou import outputs
-from instance.modeling.parsing_head.parsingiou.loss import parsingiou_loss_evaluator
 from instance.modeling import registry
+from instance.modeling.parsing_head.parsingiou import heads, outputs
+from instance.modeling.parsing_head.parsingiou.loss import parsingiou_loss_evaluator
 
 
 class ParsingIoU(torch.nn.Module):
-    def __init__(self, cfg, dim_in, spatial_scale):
+    def __init__(self, cfg, dim_in, spatial_in):
         super(ParsingIoU, self).__init__()
-        self.spatial_scale = spatial_scale
+        self.dim_in = dim_in
+        self.spatial_in = spatial_in
 
         head = registry.PARSINGIOU_HEADS[cfg.PARSING.PARSINGIOU.PARSINGIOU_HEAD]
-        self.Head = head(cfg, dim_in, self.spatial_scale)
+        self.Head = head(cfg, self.dim_in, self.spatial_in)
         output = registry.PARSINGIOU_OUTPUTS[cfg.PARSING.PARSINGIOU.PARSINGIOU_OUTPUT]
-        self.Output = output(cfg, self.Head.dim_out)
+        self.Output = output(cfg, self.Head.dim_out, self.Head.spatial_out)
 
         self.loss_evaluator = parsingiou_loss_evaluator(cfg)
 
+        self.dim_out = self.Output.dim_out
+        self.spatial_out = self.Output.spatial_out
+        
     def forward(self, features, parsingiou_targets=None):
         """
         Arguments:
@@ -29,7 +31,7 @@ class ParsingIoU(torch.nn.Module):
         Returns:
             losses (Tensor): During training, returns the losses for the
                 head. During testing, returns an empty dict.
-            parsingiou_pre (Tensor): during training, returns None. During testing, the predicted parsingiou.
+            parsingiou_pred (Tensor): during training, returns None. During testing, the predicted parsingiou.
         """
         x = self.Head(features)
         parsingiou_pred = self.Output(x)
@@ -44,4 +46,4 @@ class ParsingIoU(torch.nn.Module):
         return loss_parsingiou, None
 
     def _forward_test(self, parsingiou_pred):
-        return {}, parsingiou_pred
+        return {}, parsingiou_pred[-1]

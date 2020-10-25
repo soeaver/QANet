@@ -1,9 +1,9 @@
 import os.path as osp
 
-from lib.datasets.dataset_catalog import COMMON_DATASETS
+from lib.data.dataset_catalog import COMMON_DATASETS
 
 # Root directory of project
-ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..'))
+ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..', '..'))
 
 # Path to data dir
 _DATA_DIR = osp.abspath(osp.join(ROOT_DIR, 'data'))
@@ -14,8 +14,7 @@ _ANN_FN = 'annotation_file'
 _FIELDS = 'extra_fields'
 
 # Available datasets
-_DATASETS = {
-}
+_DATASETS = {}
 _DATASETS.update(COMMON_DATASETS)
 
 

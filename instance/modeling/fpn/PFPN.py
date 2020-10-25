@@ -1,17 +1,19 @@
 import torch
 import torch.nn as nn
 
-from lib.layers import make_conv, make_norm, make_act
-from instance.modeling.fpn import FPN, LatentEncode
+from lib.layers import make_act, make_conv, make_norm
+
 from instance.modeling import registry
+from instance.modeling.fpn import FPN, LatentEncode
 
 
 @registry.FPN_BODY.register("pfpn")
 class PFPN(nn.Module):
-    def __init__(self, cfg, dim_in, spatial_scale):
+    def __init__(self, cfg, dim_in, spatial_in):
         super().__init__()
         panoptic_dim = cfg.FPN.PANOPTIC.CONV_DIM
         norm = cfg.FPN.PANOPTIC.NORM
+        self.spatial_in = spatial_in
         self.use_latenc = cfg.FPN.PANOPTIC.USE_LATENC
         self.use_fpn = cfg.FPN.PANOPTIC.USE_FPN
 
@@ -24,7 +26,7 @@ class PFPN(nn.Module):
             else:
                 self.channel_ajust_conv = None
         if self.use_fpn:
-            self.fpn = FPN(cfg, dim_in, spatial_scale)
+            self.fpn = FPN(cfg, dim_in, self.spatial_in)
 
         if self.use_fpn:
             self.dim_in = self.fpn.dim_out
@@ -38,9 +40,9 @@ class PFPN(nn.Module):
 
         self.dim_out = [panoptic_dim]
         if self.use_fpn:
-            self.spatial_scale = self.fpn.spatial_scale[:1]
+            self.spatial_out = self.fpn.spatial_out[:1]
         else:
-            self.spatial_scale = spatial_scale[:1]
+            self.spatial_out = spatial_in[:1]
 
     def forward(self, x):
         """

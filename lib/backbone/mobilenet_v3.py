@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import lib.ops as ops
-from lib.layers import make_norm, make_act, InvertedResidual
+from lib.layers import InvertedResidual, make_act, make_norm
 from lib.utils.net import make_divisible
 
 MV3_CFG = {

@@ -1,5 +1,4 @@
 import numpy as np
-
 import torch
 from torch.nn import functional as F
 
@@ -27,31 +26,25 @@ class ParsingLossComputation(object):
         self.num_parsing = cfg.PARSING.NUM_PARSING
         self.loss_weight = cfg.PARSING.LOSS_WEIGHT
         self.lovasz_loss_weight = cfg.PARSING.LOVASZ_LOSS_WEIGHT
-        self.use_cla_iou = cfg.PARSING.PARSINGIOU.USE_CLA_IOU
 
-    def __call__(self, parsing_logits, parsing_targets):
+    def __call__(self, logits, parsing_targets):
+        parsing_logits = logits[-1]
         if self.parsingiou_on:
             pred_parsings_np = parsing_logits.detach().argmax(dim=1).cpu().numpy()
             parsing_targets_np = parsing_targets.cpu().numpy()
 
             N = parsing_targets_np.shape[0]
-            if self.use_cla_iou:
-                parsingiou_targets = np.zeros((N, self.num_parsing), dtype=np.float)
-            else:
-                parsingiou_targets = np.zeros(N, dtype=np.float)
+            parsingiou_targets = np.zeros(N, dtype=np.float)
 
             for _ in range(N):
                 parsing_iou = cal_one_mean_iou(parsing_targets_np[_], pred_parsings_np[_], self.num_parsing)
-                if self.use_cla_iou:
-                    parsingiou_targets[_] = np.nan_to_num(parsing_iou)
-                else:
-                    parsingiou_targets[_] = np.nanmean(parsing_iou)
+                parsingiou_targets[_] = np.nanmean(parsing_iou)
             parsingiou_targets = torch.from_numpy(parsingiou_targets).to(self.device, dtype=torch.float)
         else:
             parsingiou_targets = None
 
         parsing_targets = parsing_targets.to(self.device)
-        parsing_loss = F.cross_entropy(parsing_logits, parsing_targets)
+        parsing_loss = F.cross_entropy(parsing_logits, parsing_targets, reduction='mean')
         parsing_loss *= self.loss_weight
 
         if self.lovasz_loss_weight:

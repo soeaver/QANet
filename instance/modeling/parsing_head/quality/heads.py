@@ -3,6 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from lib.layers import make_conv, make_norm, make_fc, make_act
+
 from instance.modeling import registry
 
 
@@ -12,10 +13,11 @@ class QualityHead(nn.Module):
     Quality head for quality.
     """
 
-    def __init__(self, cfg, dim_in, spatial_scale):
+    def __init__(self, cfg, dim_in, spatial_in):
         super(QualityHead, self).__init__()
 
-        self.dim_in = dim_in
+        self.dim_in = dim_in[-1]
+        self.spatial_in = spatial_in
 
         num_share_convs = cfg.PARSING.QUALITY.NUM_SHARE_CONVS
         num_parsing_convs = cfg.PARSING.QUALITY.NUM_PARSING_CONVS
@@ -53,7 +55,7 @@ class QualityHead(nn.Module):
         self.add_module('iou_layers', nn.Sequential(*iou_layers))
 
         self.dim_out = [parsing_conv_dim, iou_conv_dim]
-        self.spatial_scale = [spatial_scale[0], (1, 1)]
+        self.spatial_out = [spatial_in[-1], (1, 1)]
 
         self._init_weights()
 

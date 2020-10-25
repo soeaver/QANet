@@ -1,7 +1,8 @@
 from torch import nn
 from torch.nn import functional as F
 
-from lib.layers import make_conv, make_norm, make_act
+from lib.layers import make_act, make_conv, make_fc, make_norm
+
 from instance.modeling import registry
 
 
@@ -11,10 +12,12 @@ class ParsingIoUHead(nn.Module):
     ParsingIoU head feature extractor.
     """
 
-    def __init__(self, cfg, dim_in, spatial_scale):
+    def __init__(self, cfg, dim_in, spatial_in):
         super(ParsingIoUHead, self).__init__()
 
-        self.dim_in = dim_in
+        self.dim_in = dim_in[-1]
+        self.spatial_in = spatial_in[-1]
+
         num_convs = cfg.PARSING.PARSINGIOU.NUM_CONVS  # default = 2
         conv_dim = cfg.PARSING.PARSINGIOU.CONV_DIM
         norm = cfg.PARSING.PARSINGIOU.NORM
@@ -32,8 +35,8 @@ class ParsingIoUHead(nn.Module):
 
         self.add_module('conv_layers', nn.Sequential(*conv_layers))
 
-        self.dim_out = conv_dim
-        self.spatial_scale = spatial_scale[0]
+        self.dim_out = [conv_dim]
+        self.spatial_out = [(1, 1), ]
 
         self._init_weights()
 
@@ -52,7 +55,8 @@ class ParsingIoUHead(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
+        x = x[-1]
         x = self.conv1x1(x)
         x = self.conv_layers(F.adaptive_avg_pool2d(x, (1, 1)))
 
-        return x
+        return [x]

@@ -1,13 +1,12 @@
-import os
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pycocotools.mask as mask_util
 from collections import defaultdict
 
 import lib.utils.colormap as colormap_utils
-from lib.datasets.structures.keypoint import PersonKeypoints
-from .timer import Timer
+from lib.data.structures.keypoint import PersonKeypoints
+from lib.utils.timer import Timer
 
 
 class Visualizer(object):
@@ -176,7 +175,7 @@ class Visualizer(object):
         x1, y1 = int(x0 + w), int(y0 + h)
         x0, y0 = int(x0), int(y0)
         cv2.rectangle(self.im, (x0, y0), (x1, y1), bbox_color, thickness=self.cfg.SHOW_BOX.BORDER_THICK)
-        
+
     def vis_rotated_bbox(self, rotated_bbox, bbox_color):
         """Visualizes a rotated bounding box."""
         (x0, y0, w, h, a) = rotated_bbox

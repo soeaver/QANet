@@ -2,8 +2,6 @@ from collections import Counter, OrderedDict
 from numpy import prod
 
 import torch
-import torch.nn as nn
-
 
 # A list that contains ignored operations.
 _IGNORED_OPS = [
@@ -78,9 +76,7 @@ def get_jit_model_analysis(model, inputs, ops_handles,):
             Counter of ignored operations.
     """
     # Torch script does not support parallel torch models.
-    if isinstance(
-        model, (nn.parallel.distributed.DistributedDataParallel, nn.DataParallel)
-    ):
+    if isinstance(model, (torch.nn.parallel.distributed.DistributedDataParallel, torch.nn.DataParallel)):
         model = model.module  # pyre-ignore
 
     # Compatibility with torch.jit.
@@ -269,14 +265,12 @@ def einsum_flop_jit(inputs, outputs):
         flop = n * c * t * p
         flop_counter = Counter({'einsum': flop})
         return flop_counter
-
     elif equation == 'abc,adc->adb':
         n, t, g = input_shapes[0]
         c = input_shapes[-1][1]
         flop = n * t * g * c
         flop_counter = Counter({'einsum': flop})
         return flop_counter
-
     else:
         raise NotImplementedError('Unsupported einsum operation.')
 

@@ -5,14 +5,16 @@ from instance.modeling import registry
 
 @registry.PARSINGIOU_OUTPUTS.register("parsingiou_output")
 class ParsingIoUOutput(nn.Module):
-    def __init__(self, cfg, dim_in):
+    def __init__(self, cfg, dim_in, spatial_in):
         super(ParsingIoUOutput, self).__init__()
+        self.dim_in = dim_in[-1]
+        self.spatial_in = spatial_in
 
-        self.num_parsing = cfg.PARSING.NUM_PARSING
-        self.use_cla_iou = cfg.PARSING.PARSINGIOU.USE_CLA_IOU
+        num_classes = 1
+        self.parsing_iou = nn.Linear(self.dim_in, num_classes)
 
-        dim_out = self.num_parsing if self.use_cla_iou else 1
-        self.parsing_iou = nn.Linear(dim_in, dim_out)
+        self.dim_out = [num_classes]
+        self.spatial_out = [(1, 1), ]
 
         self._init_weights()
 
@@ -28,5 +30,6 @@ class ParsingIoUOutput(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
+        x = x[-1]
         x = self.parsing_iou(x.view(x.size(0), -1))
-        return x
+        return [x]

@@ -1,14 +1,15 @@
-from apex import amp
-
-from torch import nn
+import torch
+import torch.nn as nn
 from torch.autograd import Function
 from torch.autograd.function import once_differentiable
+from torch.cuda.amp import custom_bwd, custom_fwd
 
 from lib.ops import _C
 
 
 class _PoolPointsInterp(Function):
     @staticmethod
+    @custom_fwd(cast_inputs=torch.float32)
     def forward(ctx, input, roi, spatial_scale):
         ctx.save_for_backward(roi)
         ctx.spatial_scale = spatial_scale
@@ -17,6 +18,7 @@ class _PoolPointsInterp(Function):
         return output
 
     @staticmethod
+    @custom_bwd
     @once_differentiable
     def backward(ctx, grad_output):
         rois, = ctx.saved_tensors
@@ -42,7 +44,6 @@ class PoolPointsInterp(nn.Module):
         super(PoolPointsInterp, self).__init__()
         self.spatial_scale = spatial_scale
 
-    @amp.float_function
     def forward(self, input, rois):
         return pool_points_interp(input, rois, self.spatial_scale)
 

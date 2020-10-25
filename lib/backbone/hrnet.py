@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import lib.ops as ops
-from lib.layers import make_norm, BasicBlock, Bottleneck
+from lib.layers import BasicBlock, Bottleneck, make_norm
 
 
 class StageModule(nn.Module):

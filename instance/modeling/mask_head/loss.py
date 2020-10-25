@@ -7,7 +7,8 @@ class MaskLossComputation(object):
         self.maskiou_on = cfg.MASK.MASKIOU_ON
         self.loss_weight = cfg.MASK.LOSS_WEIGHT
 
-    def __call__(self, mask_logits, mask_targets):
+    def __call__(self, logits, mask_targets):
+        mask_logits = logits[-1]
         mask_logits = mask_logits.squeeze(1)
 
         if self.maskiou_on:
@@ -21,13 +22,13 @@ class MaskLossComputation(object):
             mask_union_area = torch.max(mask_union_area, value_1)
             mask_ovr_area = torch.max(mask_ovr_area, value_0)
             maskiou_targets = mask_ovr_area / mask_union_area
-
-        mask_loss = F.binary_cross_entropy_with_logits(mask_logits, mask_targets)
-        mask_loss *= self.loss_weight
-        if self.maskiou_on:
-            return mask_loss, maskiou_targets
         else:
-            return mask_loss
+            maskiou_targets = None
+
+        mask_loss = F.binary_cross_entropy_with_logits(mask_logits, mask_targets, reduction='mean')
+        mask_loss *= self.loss_weight
+
+        return mask_loss, maskiou_targets
 
 
 def mask_loss_evaluator(cfg):

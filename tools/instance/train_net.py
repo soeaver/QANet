@@ -1,36 +1,33 @@
-import os
-import time
-import shutil
 import argparse
+import os
+import shutil
+import time
 
 import torch
-import torch.nn as nn
 import torch.backends.cudnn as cudnn
-
-from apex import amp
-from apex.parallel import DistributedDataParallel
+import torch.cuda.amp as amp
 
 import _init_paths  # pylint: disable=unused-import
-from lib.utils.misc import mkdir_p, logging_rank, setup_logging
-from lib.utils.net import mismatch_params_filter
-from lib.utils.checkpointer import CheckPointer
-from lib.utils.optimizer import Optimizer
-from lib.utils.lr_scheduler import LearningRateScheduler
-from lib.utils.events import EventStorage
-from lib.utils.new_logger import build_train_hooks, build_test_hooks, write_metrics
-from lib.utils.timer import Timer
 from lib.utils.analyser import Analyser
-from lib.utils.comm import all_gather, is_main_process, get_world_size, synchronize
+from lib.utils.checkpointer import CheckPointer
+from lib.utils.comm import all_gather, get_world_size, is_main_process, synchronize
+from lib.utils.events import EventStorage
+from lib.utils.logger import build_test_hooks, build_train_hooks, write_metrics
+from lib.utils.lr_scheduler import LearningRateScheduler
+from lib.utils.misc import logging_rank, mkdir_p, setup_logging
+from lib.utils.net import mismatch_params_filter
+from lib.utils.optimizer import Optimizer
+from lib.utils.timer import Timer
 
 from instance.core.config import get_cfg, infer_cfg
 from instance.core.test import TestEngine
-from instance.datasets.dataset import build_dataset, make_data_sampler, make_train_data_loader, make_test_data_loader
+from instance.datasets.dataset import build_dataset, make_data_sampler, make_test_data_loader, make_train_data_loader
 from instance.datasets.evaluation import Evaluation
 from instance.modeling.model_builder import Generalized_CNN
 
 
 def train(cfg, model, sampler, train_loader, test_loader, test_set, test_engine,
-          optimizer, scheduler, checkpointer, all_hooks):
+          optimizer, scheduler, scaler, checkpointer, all_hooks):
     # switch to train mode
     model.train()
     iter_per_epoch = len(train_loader)
@@ -57,19 +54,19 @@ def train(cfg, model, sampler, train_loader, test_loader, test_set, test_engine,
 
                     optimizer.zero_grad()
 
-                    outputs = model(inputs, targets)
-                    losses = sum(loss for loss in outputs['losses'].values())
+                    with amp.autocast(enabled=cfg.SOLVER.AMP.ENABLED):
+                        outputs = model(inputs, targets)
+                        losses = sum(outputs['losses'].values())
+
                     metrics_dict = outputs['losses']
                     metrics_dict["data_time"] = data_time
                     metrics_dict["best_acc1"] = scheduler.info['best_acc']
                     write_metrics(metrics_dict, storage)
 
-                    if cfg.SOLVER.AMP.ENABLED:
-                        with amp.scale_loss(losses, optimizer) as scaled_loss:
-                            scaled_loss.backward()
-                    else:
-                        losses.backward()
-                    optimizer.step()
+                    scaler.scale(losses).backward()
+                    scaler.step(optimizer)
+                    scaler.update()
+
                     for h in all_hooks:
                         h.after_step(epoch=epoch, storage=storage)
                     storage.step()
@@ -194,12 +191,6 @@ def main(args):
     optimizer = checkpointer.load_optimizer(optimizer)
     logging_rank('The mismatch keys: {}'.format(mismatch_params_filter(sorted(checkpointer.mismatch_keys))))
 
-    if cfg.SOLVER.AMP.ENABLED:
-        # Create Amp for mixed precision training
-        model, optimizer = amp.initialize(model, optimizer, opt_level=cfg.SOLVER.AMP.OPT_LEVEL,
-                                          keep_batchnorm_fp32=cfg.SOLVER.AMP.KEEP_BN_FP32,
-                                          loss_scale=cfg.SOLVER.AMP.LOSS_SCALE)
-
     # Create training loader
     datasets = build_dataset(cfg, is_train=True)
     train_sampler = make_data_sampler(cfg, datasets)
@@ -222,12 +213,12 @@ def main(args):
     # Model Distributed
     distributed = get_world_size() > 1
     if distributed:
-        if cfg.SOLVER.AMP.ENABLED:
-            model = DistributedDataParallel(model)  # use apex.parallel
-        else:
-            model = torch.nn.parallel.DistributedDataParallel(
-                model, device_ids=[args.local_rank], output_device=args.local_rank
-            )
+        model = torch.nn.parallel.DistributedDataParallel(
+            model, device_ids=[args.local_rank], output_device=args.local_rank
+        )
+
+    # Create Amp for mixed precision training
+    scaler = amp.GradScaler(enabled=cfg.SOLVER.AMP.ENABLED)
 
     # Build hooks
     max_iter = iter_per_epoch
@@ -237,17 +228,17 @@ def main(args):
 
     # Train
     train(cfg, model, train_sampler, train_loader, test_loader, test_set, test_engine,
-          optimizer, scheduler, checkpointer, all_hooks)
+          optimizer, scheduler, scaler, checkpointer, all_hooks)
 
 
 if __name__ == '__main__':
     # Parse arguments
-    parser = argparse.ArgumentParser(description='Pet Model Training')
+    parser = argparse.ArgumentParser(description='QANet Model Training')
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file',
-                        default='./cfgs/instance/mscoco/simple_R-50c-D3K4C256_256x192_adam_1x.yaml', type=str)
+                        default='cfgs/CIHP/QANet/QANet_R-50c_512x384_1x.yaml', type=str)
     parser.add_argument('--local_rank', type=int, default=0)
-    parser.add_argument('opts', help='See pet/instance/core/config.py for all options',
+    parser.add_argument('opts', help='See instance/core/config.py for all options',
                         default=None,
                         nargs=argparse.REMAINDER)
 

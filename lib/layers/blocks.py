@@ -3,9 +3,9 @@ import math
 import torch
 import torch.nn as nn
 
-import lib.ops as ops
+from lib.layers.wrappers import get_conv_op, get_norm_op, make_act, make_conv, make_ctx, make_norm
+from lib.ops import SeConv2d, SplAtConv2d
 from lib.utils.net import make_divisible
-from lib.layers.wrappers import get_conv_op, get_norm_op, make_conv, make_norm, make_act, make_ctx
 
 
 class BasicBlock(nn.Module):
@@ -68,7 +68,7 @@ class Bottleneck(nn.Module):
         else:
             self.avd_layer = None
         if radix > 1:
-            self.conv2 = ops.SplAtConv2d(
+            self.conv2 = SplAtConv2d(
                 D * C, D * C, kernel_size=3, stride=str3x3, padding=dilation, dilation=dilation, groups=C, bias=False,
                 radix=radix, conv_op=get_conv_op(conv=conv), norm_op=get_norm_op(norm=norm)
             )
@@ -136,7 +136,7 @@ class AlignedBottleneck(nn.Module):
         self.bn1_1 = make_norm(D * C, norm=norm.replace('Mix', ''))
 
         if radix > 1:
-            self.conv1_2 = ops.SplAtConv2d(
+            self.conv1_2 = SplAtConv2d(
                 D * C, D * C, kernel_size=3, stride=stride, padding=dilation, dilation=dilation, groups=C, bias=False,
                 radix=radix, conv_op=get_conv_op(conv=conv), norm_op=get_norm_op(norm=norm)
             )
@@ -148,12 +148,12 @@ class AlignedBottleneck(nn.Module):
         self.bn2_1 = make_norm(D * C // 2, norm=norm.replace('Mix', ''))
 
         if radix > 1:
-            self.conv2_2 = ops.SplAtConv2d(
+            self.conv2_2 = SplAtConv2d(
                 D * C // 2, D * C // 2, kernel_size=3, stride=stride, padding=dilation, dilation=dilation,
                 groups=math.ceil(C / 2), bias=False, radix=radix, conv_op=get_conv_op(conv=conv),
                 norm_op=get_norm_op(norm=norm)
             )
-            self.conv2_3 = ops.SplAtConv2d(
+            self.conv2_3 = SplAtConv2d(
                 D * C // 2, D * C // 2, kernel_size=3, stride=1, padding=dilation, dilation=dilation,
                 groups=math.ceil(C / 2), bias=False, radix=radix, conv_op=get_conv_op(conv=conv),
                 norm_op=get_norm_op(norm=norm)
@@ -243,7 +243,7 @@ class InvertedResidual(nn.Module):
         se_base_chs = innerplanes if se_reduce_mid else self.inplanes
         se_innerplanse = make_divisible(se_base_chs * se_ratio, 8) if se_divisible else int(se_base_chs * se_ratio)
         if se_ratio:
-            self.se = ops.SeConv2d(
+            self.se = SeConv2d(
                 innerplanes, se_innerplanse, inner_act=act if sync_se_act else 'ReLU', out_act=se_out_act
             )
         else:

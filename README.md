@@ -4,7 +4,7 @@ Official implementation of **Quality-Aware Network for Human Parsing**
 In this repository, we release the RP R-CNN code in Pytorch.
 
 - QANet architecture:
-<p align="center"><img width="90%" src="docs/qanet.pdf" /></p>
+<p align="center"><img width="90%" src="docs/qanet.png" /></p>
 
 
 ## Installation

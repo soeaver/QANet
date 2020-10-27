@@ -2,7 +2,7 @@
 - Pytorch official code of QANet is released. (01/11/2020)
 
 
-# QANet
+# Introduction
 Official implementation of **Quality-Aware Network for Human Parsing**
 
 In this repository, we release the QANet code in Pytorch.
@@ -27,11 +27,18 @@ If you use QANet, please use the following BibTeX entry.
 
 
 ## Installation
+
 - 8 x TITAN RTX GPU
 - pytorch1.6
 - python3.6.8
 
 Install QANet following [INSTALL.md](https://github.com/soeaver/QANet/blob/master/docs/INSTALL.md#install).
+
+
+## Data Prepare
+
+Please follow [DATA_PREPARE.md](https://github.com/soeaver/QANet/blob/master/docs/DATA_PREPARE.md#data_prepare) to download training and evaluating data.
+
 
 
 ## Results and Models
@@ -54,15 +61,17 @@ Install QANet following [INSTALL.md](https://github.com/soeaver/QANet/blob/maste
 
 
 - Flip test is used.
-- For CIHP, we use fcos-R50 detector to detect person (73.1 AP on CIHP val).
+- For CIHP, we use fcos-R50 to detect person (73.1 AP on CIHP val).
 - Multi-scale test is used for LIP.
 
 
-**ImageNet pretrained weight**
+**ImageNet pretrained weights**
 
 - [ResNet50](https://drive.google.com/open?id=1EtqFhrFTdBJNbp67effArVrTNx4q_ELr)
 - [ResNet101](https://drive.google.com/open?id=1c4OSVZIZtDT49B0DTC0tK3vcRgJpzR9n)
 - [HRNet-W48](https://drive.google.com/open?id=1c4OSVZIZtDT49B0DTC0tK3vcRgJpzR9n)
+
+please put the pretrained weights in `QANet/weights`
 
 
 ## Training

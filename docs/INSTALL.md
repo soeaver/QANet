@@ -1,8 +1,8 @@
-# Installing Pet
+# Installing QANet
 
-This document covers how to install Pet, its dependencies (including Pytorch), and the COCO dataset.
+This document covers how to install QANet, its dependencies (including Pytorch), and the COCO dataset.
 
-- For general information about Pet, please see [`README.md`](README.md).
+- For general information about QANet, please see [`README.md`](README.md).
 
 **Requirements:**
 
@@ -67,8 +67,6 @@ sudo pip3 install --upgrade pip
 sudo pip3 install opencv-python
 ```
 
-For install opencv3, please refer to [`Compile_opencv3.md`](https://github.com/soeaver/environment_config/blob/master/Compile_opencv3.md)
-
 
 ## Pytorch and torchvision
 
@@ -86,55 +84,24 @@ sudo pip3 install torch==1.6.0
 sudo pip3 install torchvision==0.7.0
 ```
 
-## Pet
+## QANet
 
-1. Clone the Pet repository:
+1. Clone the QANet repository:
 
 ```
-git clone https://github.com/BUPT-PRIV/Pet-dev.git
+git clone https://github.com/soeaver/QANet.git
 ```
 
 2. Install the requirements.txt:
 
 ```
-cd Pet-dev/pet
+cd QANet
 sudo pip3 install -r requirements.txt
 ```
 
-3. Set up `pet`:
+3. Set up `QANet`:
 
 ```
-cd Pet-dev/pet
+cd QANet
 sh make.sh
-```
-
-   **Note:** If you get `CompileError: command 'x86_64-linux-gnu-gcc'`, please:
-
-```
-export CXXFLAGS="-std=c++11"
-
-export CFLAGS="-std=c99"
-
-sh ./make.sh
-```
-
-   **Note:** If you get `name 'unicode' is not defined` when use cocoapi, please:
-
-```
-sudo vim /usr/local/lib/python3.6/dist-packages/pycocotools/coco.py
-
-change 'if type(resFile) == str or type(resFile) == unicode:' to
-'if type(resFile) == str:' in line num 308
-```
-
-   **Note:** If you get `RuntimeError: Expected a 'N2at13CUDAGeneratorE' but found 'PN2at9GeneratorE'`, please:
-
-```
-vim {python_path}/site-packages/torch/utils/data/distributed.py
-
-change
-indices = torch.randperm(len(self.dataset), generator=g).tolist()
-to
-cpu = torch.device('cpu')
-indices = torch.randperm(len(self.dataset), device=cpu, generator=g).tolist()
 ```

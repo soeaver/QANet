@@ -6,11 +6,13 @@ import scipy.spatial.distance
 import torch
 from scipy.io import loadmat
 
+
+
 # transpose
 FLIP_LEFT_RIGHT = 0
 FLIP_TOP_BOTTOM = 1
-ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..', '..', '..'))
-UV_DATA_DIR = osp.abspath(osp.join(ROOT_DIR, 'data'))
+ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..', '..'))
+UV_DATA_DIR = osp.abspath(osp.join(ROOT_DIR, 'data/coco/annotations'))
 
 
 class DenseposeUVs(object):

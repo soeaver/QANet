@@ -39,7 +39,7 @@ class UV(torch.nn.Module):
 
     def _forward_test(self, conv_features, targets=None):
         uv_feat = self.Head(conv_features)
-        logits = self.Output(uv_feat)
-        uv_logits = logits[-1]
+        uv_logits = self.Output(uv_feat)
+        # uv_logits = logits[-1]
         return dict(probs=uv_logits, uv_iou_scores=torch.ones(uv_logits[0].size()[0], dtype=torch.float32,
-                                                            device=uv_logits[0].device)), {}
+                                                              device=uv_logits[0].device)), {}

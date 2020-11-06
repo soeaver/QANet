@@ -140,7 +140,8 @@ COMMON_DATASETS = {
         _ANN_FN:
             _DATA_DIR + '/coco/annotations/DensePoseData/densepose_coco_train2017.json',
         _FIELDS:
-            {'ann_types': ['bbox', 'mask', 'uv']}
+            {'ann_types': ['bbox', 'mask', 'uv'],
+             'uv_root': _DATA_DIR + '/coco/annotations/'}
     },
     'dense_coco_2017_val': {
         _IM_DIR:
@@ -148,7 +149,8 @@ COMMON_DATASETS = {
         _ANN_FN:
             _DATA_DIR + '/coco/annotations/DensePoseData/densepose_coco_val2017.json',
         _FIELDS:
-            {'ann_types': ['bbox', 'mask', 'uv']}
+            {'ann_types': ['bbox', 'mask', 'uv'],
+             'uv_root': _DATA_DIR + '/coco/annotations/'}
     },
     'dense_coco_2017_test': {
         _IM_DIR:
@@ -156,7 +158,8 @@ COMMON_DATASETS = {
         _ANN_FN:
             _DATA_DIR + '/coco/annotations/DensePoseData/densepose_coco_test.json',
         _FIELDS:
-            {'ann_types': ['bbox', 'mask', 'uv']}
+            {'ann_types': ['bbox', 'mask', 'uv'],
+             'uv_root': _DATA_DIR + '/coco/annotations/'}
     },
     'lvis_v0.5_train': {
         _IM_DIR:

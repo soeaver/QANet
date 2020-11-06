@@ -422,7 +422,7 @@ def evaluate_on_coco(cfg, coco_gt, coco_results, json_result_file, iou_type):
             pickle.dump(coco_results, f, 2)
         if cfg.TEST.DATASETS[0].find('test') > -1:
             return
-        eval_data_dir = cfg.DATA_DIR + '/DensePoseData/eval_data/'
+        eval_data_dir = cfg.DATA_DIR + '/coco/annotations/DensePoseData/eval_data/'
         coco_dt = coco_gt.loadRes(coco_results)
         coco_eval = DensePoseEvaluator(coco_gt, coco_dt, iou_type, eval_data_dir, calc_mode=cfg.UV.CALC_MODE)
     return coco_eval

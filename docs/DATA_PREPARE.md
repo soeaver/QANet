@@ -2,9 +2,14 @@
 
 This document covers how to prepare training and evaluating data for QANet, including CIHP and LIP dataset.
 
+
+
 # Data Structure
 
   We strongly recommend downloading the data format we prepared.
+  
+  - [CIHP](https://drive.google.com/file/d/1k-cUS2WyK9eAasYcheCTmqSgLSaEO4U4/view?usp=sharing)
+  - [LIP](https://drive.google.com/file/d/15buYPS1syjkn1r9NWMA5YfKn4VtpL6hT/view?usp=sharing)
   
   Make sure to put the files as the following structure:
 

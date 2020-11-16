@@ -30,7 +30,7 @@ def parse_args():
     parser.add_argument('--gpu_id', type=str, default='0,1,2,3,4,5,6,7', help='gpu id for test')
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file',
-                        default='./cfgs/rcnn/mscoco/e2e_faster_rcnn_R-50-FPN_1x.yaml', type=str)
+                        default='./ckpts/CIHP/QANet/QANet_R-50c_512x384_1x/QANet_R-50c_512x384_1x.yaml', type=str)
     # rest from the testing program
     parser.add_argument('testing_script_args', nargs=REMAINDER)
     return parser.parse_args()
@@ -61,7 +61,7 @@ def main():
         #       "your application as needed. \n"
         #       "*****************************************".format(current_env["OMP_NUM_THREADS"]))
 
-    testing_script = "tools/instance/test_net.py"
+    testing_script = "tools/qanet/test_net.py"
 
     for local_rank in range(0, num_gpus):
         # each process's rank

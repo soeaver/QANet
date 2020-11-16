@@ -19,11 +19,11 @@ from lib.utils.net import mismatch_params_filter
 from lib.utils.optimizer import Optimizer
 from lib.utils.timer import Timer
 
-from instance.core.config import get_cfg, infer_cfg
-from instance.core.test import TestEngine
-from instance.datasets.dataset import build_dataset, make_data_sampler, make_test_data_loader, make_train_data_loader
-from instance.datasets.evaluation import Evaluation
-from instance.modeling.model_builder import Generalized_CNN
+from qanet.core.config import get_cfg, infer_cfg
+from qanet.core.test import TestEngine
+from qanet.datasets.dataset import build_dataset, make_data_sampler, make_test_data_loader, make_train_data_loader
+from qanet.datasets.evaluation import Evaluation
+from qanet.modeling.model_builder import Generalized_CNN
 
 
 def train(cfg, model, sampler, train_loader, test_loader, test_set, test_engine,
@@ -236,9 +236,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='QANet Model Training')
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file',
-                        default='cfgs/CIHP/QANet/QANet_R-50c_512x384_1x.yaml', type=str)
+                        default='./cfgs/CIHP/QANet/QANet_R-50c_512x384_1x.yaml', type=str)
     parser.add_argument('--local_rank', type=int, default=0)
-    parser.add_argument('opts', help='See instance/core/config.py for all options',
+    parser.add_argument('opts', help='See qanet/core/config.py for all options',
                         default=None,
                         nargs=argparse.REMAINDER)
 

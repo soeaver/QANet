@@ -11,11 +11,11 @@ from lib.utils.logger import build_test_hooks
 from lib.utils.misc import logging_rank, mkdir_p, setup_logging
 from lib.utils.timer import Timer
 
-from instance.core.config import get_cfg, infer_cfg
-from instance.core.test import TestEngine
-from instance.datasets.dataset import build_dataset, make_test_data_loader
-from instance.datasets.evaluation import Evaluation
-from instance.modeling.model_builder import Generalized_CNN
+from qanet.core.config import get_cfg, infer_cfg
+from qanet.core.test import TestEngine
+from qanet.datasets.dataset import build_dataset, make_test_data_loader
+from qanet.datasets.evaluation import Evaluation
+from qanet.modeling.model_builder import Generalized_CNN
 
 
 def test(cfg, test_engine, loader, datasets, all_hooks):
@@ -114,9 +114,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='QANet Model Training')
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file',
-                        default='cfgs/CIHP/QANet/QANet_R-50c_512x384_1x.yaml', type=str)
+                        default='./ckpts/CIHP/QANet/QANet_R-50c_512x384_1x/QANet_R-50c_512x384_1x.yaml', type=str)
     parser.add_argument('--local_rank', type=int, default=0)
-    parser.add_argument('opts', help='See instance/core/config.py for all options',
+    parser.add_argument('opts', help='See qanet/core/config.py for all options',
                         default=None,
                         nargs=argparse.REMAINDER)
 

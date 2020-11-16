@@ -49,7 +49,7 @@ Please follow [DATA_PREPARE.md](https://github.com/soeaver/QANet/blob/master/doc
 |:----------:|:----:|:---------------:|:----------:| :-------:|
 |  ResNet50  | 62.9 | 60.1/74.3/68.9  | 56.2/63.5  | [GoogleDrive](https://drive.google.com/drive/folders/1DEqkkTKCbAvLXhJeoy2NC5CYZlr41Wak?usp=sharing) |        |
 |  ResNet101 | 64.1 | 62.0/77.9/72.4  | 57.9/65.6  |          |
-|  HRNet-W48 | 66.1 | 64.5/81.3/75.7  | 60.8/68.8  | [GoogleDrive](https://drive.google.com/file/d/15Un6LfPzQgRXDZRgPKiXmxbJ7hVOxzOp/view?usp=sharing) |
+|  HRNet-W48 | 66.1 | 64.5/81.3/75.7  | 60.8/68.8  | [GoogleDrive](https://drive.google.com/drive/folders/145SAx0wTqu8y5JvW2L1TvVP5nczCt1_n?usp=sharing) |
 
 
 **QANet On LIP**

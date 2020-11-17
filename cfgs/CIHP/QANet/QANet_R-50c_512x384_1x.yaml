@@ -27,7 +27,7 @@ PARSING:
   QUALITY_WEIGHTS: (1.0, 0.5, 3.0)  # QAM
 SOLVER:
   MAX_EPOCHS: 140
-  BASE_LR: 0.002
+  BASE_LR: 0.00075
   OPTIMIZER: 'ADAM'
   MOMENTUM: 0.9
   WEIGHT_DECAY: 0.0001
@@ -36,9 +36,9 @@ SOLVER:
   LR_POLICY: 'STEP'
   STEPS: [90, 120]
 TRAIN:
-  WEIGHTS: 'weights/pytorch-model/resnet50_1x64d/resnet50_1x64d-77.50.pth'
+  WEIGHTS: 'weights/resnet50c-pretrained.pth'
   DATASETS: ('CIHP_train', )
-  BATCH_SIZE: 256
+  BATCH_SIZE: 96
   SCALES: ([384, 512],)
 TEST:
   WEIGHTS: ''

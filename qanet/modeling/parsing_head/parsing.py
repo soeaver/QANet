@@ -5,7 +5,6 @@ from qanet.modeling import registry
 from qanet.modeling.parsing_head import heads, outputs
 from qanet.modeling.parsing_head.loss import parsing_loss_evaluator
 from qanet.modeling.parsing_head.parsingiou.parsingiou import ParsingIoU
-from qanet.modeling.parsing_head.quality.quality import Quality
 
 
 class Parsing(torch.nn.Module):
@@ -14,11 +13,6 @@ class Parsing(torch.nn.Module):
         self.dim_in = dim_in
         self.spatial_in = spatial_in
         self.parsingiou_on = cfg.PARSING.PARSINGIOU_ON
-        self.quality_on = cfg.PARSING.QUALITY_ON
-
-        if self.quality_on:
-            self.Quality = Quality(cfg, self.dim_in, self.spatial_in)
-            self.dim_in = self.Quality.dim_out
 
         head = registry.PARSING_HEADS[cfg.PARSING.PARSING_HEAD]
         self.Head = head(cfg, self.dim_in, self.spatial_in)
@@ -42,10 +36,6 @@ class Parsing(torch.nn.Module):
     def _forward_train(self, conv_features, targets=None):
         losses = dict()
 
-        if self.quality_on:
-            loss_quality, conv_features = self.Quality(conv_features, targets['parsing'])
-            losses.update(loss_quality)
-
         x = self.Head(conv_features)
         logits = self.Output(x)
 
@@ -59,9 +49,6 @@ class Parsing(torch.nn.Module):
         return None, losses
 
     def _forward_test(self, conv_features):
-        if self.quality_on:
-            _, conv_features = self.Quality(conv_features, None)
-
         x = self.Head(conv_features)
         logits = self.Output(x)
 

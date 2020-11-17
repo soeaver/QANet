@@ -37,6 +37,7 @@ eggs/
 /ckpts/*
 /data/*
 /weights/*
+*/__pycache__
 
 # environments
 .env

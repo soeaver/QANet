@@ -4,7 +4,7 @@ import torch.nn as nn
 from lib.layers import make_act, make_conv, make_norm
 
 from qanet.modeling import registry
-from qanet.modeling.fpn import FPN, LatentEncode
+from qanet.modeling.fpn import FPN
 
 
 @registry.FPN_BODY.register("pfpn")
@@ -14,17 +14,8 @@ class PFPN(nn.Module):
         panoptic_dim = cfg.FPN.PANOPTIC.CONV_DIM
         norm = cfg.FPN.PANOPTIC.NORM
         self.spatial_in = spatial_in
-        self.use_latenc = cfg.FPN.PANOPTIC.USE_LATENC
         self.use_fpn = cfg.FPN.PANOPTIC.USE_FPN
 
-        if self.use_latenc:
-            self.latent_encode = LatentEncode(cfg, dim_in, spatial_scale)
-            if self.latent_encode.dim_out[0] != panoptic_dim:
-                self.channel_ajust_conv = make_conv(
-                    self.latent_encode.dim_out[0], panoptic_dim, kernel_size=1, norm=make_norm(panoptic_dim, norm=norm)
-                )
-            else:
-                self.channel_ajust_conv = None
         if self.use_fpn:
             self.fpn = FPN(cfg, dim_in, self.spatial_in)
 
@@ -51,8 +42,6 @@ class PFPN(nn.Module):
         Returns:
             segmentation_mask: semantic segmentation mask
         """
-        if self.use_latenc:
-            latent_feat = self.latent_encode(x)
         if self.use_fpn:
             x = self.fpn(x)
         x1 = self.scale1_block(x[3])
@@ -61,10 +50,6 @@ class PFPN(nn.Module):
         x4 = self.scale4_block(x[0])
 
         x = x1 + x2 + x3 + x4
-        if self.use_latenc:
-            if self.channel_ajust_conv is not None:
-                latent_feat = self.channel_ajust_conv(latent_feat)
-            x = x * latent_feat
 
         return [x]
 

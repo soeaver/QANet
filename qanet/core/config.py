@@ -7,7 +7,7 @@ _C = CN()
 # ---------------------------------------------------------------------------- #
 # Misc options
 # --------------------------------------------------------------------------- #
-# Version of Pet
+# Version of QANet
 _C.VERSION = '0.6'
 
 # Device for training or testing
@@ -47,7 +47,7 @@ _C.DATA_DIR = osp.abspath(osp.join(_C.ROOT_DIR, 'data'))
 # A very small number that's used many times
 _C.EPS = 1e-14
 
-# Convert image to RGB format (for Pet pre-trained models), in range 0-1
+# Convert image to RGB format (for QANet pre-trained models), in range 0-1
 # image format
 # "bgr255": BGR in range 0-255
 # "rgb255": RGB in range 0-255
@@ -75,10 +75,6 @@ _C.MODEL.PARSING_ON = False
 
 # Indicates the model makes UV predictor
 _C.MODEL.UV_ON = False
-
-# TODO
-# Indicates the model makes part bbox predictions
-_C.MODEL.HIER_ON = False
 
 
 # ---------------------------------------------------------------------------- #
@@ -158,18 +154,6 @@ _C.SOLVER.AMP = CN()
 
 _C.SOLVER.AMP.ENABLED = False
 
-# Opt level for amp initialize
-# (e.g., 'O0 = fp32 training', 'O1 = conservative mixed precision training',
-#  'O2 = fast mixed precision', 'O3 = fp16 training')
-_C.SOLVER.AMP.OPT_LEVEL = 'O2'
-
-# Batchnorm op uses fp32 training
-_C.SOLVER.AMP.KEEP_BN_FP32 = True
-
-# Using dynamic loss scaling,
-# can be overridden to use static loss scaling, e.g., 128.0
-_C.SOLVER.AMP.LOSS_SCALE = 'dynamic'
-
 
 # -----------------------------------------------------------------------------
 # DataLoader options
@@ -210,7 +194,7 @@ _C.DATALOADER.GT_FORMAT.SEMSEG = "mask"
 _C.TRAIN = CN()
 
 # Initialize network with weights from this .pth file
-_C.TRAIN.WEIGHTS = 'weights/vgg16-73.4.pth'
+_C.TRAIN.WEIGHTS = ''
 
 # Datasets to train on
 # If multiple datasets are listed, the model is trained on their union
@@ -397,75 +381,6 @@ _C.BACKBONE.HRNET.NORM = 'BN'
 _C.BACKBONE.HRNET.STAGE_WITH_CTX = ("", "", "", "")
 
 # ---------------------------------------------------------------------------- #
-# MobileNet V1 options
-# ---------------------------------------------------------------------------- #
-_C.BACKBONE.MV1 = CN()
-
-# The number of layers in each block
-_C.BACKBONE.MV1.LAYERS = (2, 2, 6, 2)
-
-# The initial width of each block
-_C.BACKBONE.MV1.NUM_CHANNELS = [32, 64, 128, 256, 512, 1024]
-
-# Kernel size of depth-wise separable convolution layers
-_C.BACKBONE.MV1.KERNEL = 3
-
-# Network widen factor
-_C.BACKBONE.MV1.WIDEN_FACTOR = 1.0
-
-# Use dropblock in C4 and C5
-_C.BACKBONE.MV1.USE_DP = False
-
-# Type of normalization
-# E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.BACKBONE.MV1.NORM = 'BN'
-
-# ---------------------------------------------------------------------------- #
-# MobileNet V2 options
-# ---------------------------------------------------------------------------- #
-_C.BACKBONE.MV2 = CN()
-
-# Network widen factor
-_C.BACKBONE.MV2.WIDEN_FACTOR = 1.0
-
-# Type of normalization
-# E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.BACKBONE.MV2.NORM = 'BN'
-
-# ---------------------------------------------------------------------------- #
-# MobileNet V3 options
-# ---------------------------------------------------------------------------- #
-_C.BACKBONE.MV3 = CN()
-
-# Network setting of MobileNet V3
-_C.BACKBONE.MV3.SETTING = 'large'
-
-# Network widen factor
-_C.BACKBONE.MV3.WIDEN_FACTOR = 1.0
-
-# Se module mid channel base, if True use innerplanes, False use inplanes
-_C.BACKBONE.MV3.SE_REDUCE_MID = True
-
-# Se module mid channel divisible. This param is to fit otf-fficial implementation
-_C.BACKBONE.MV3.SE_DIVISIBLE = False
-
-# Use conv bias in head. This param is to fit tf-official implementation
-_C.BACKBONE.MV3.HEAD_USE_BIAS = False
-
-# Force using residual. This param is to fit tf-official implementation
-_C.BACKBONE.MV3.FORCE_RESIDUAL = False
-
-# Sync block act to se module. This param is to fit tf-official implementation
-_C.BACKBONE.MV3.SYNC_SE_ACT = True
-
-# Use Conv2dSamePadding to replace Conv2d for fitting tf-original implementation
-_C.BACKBONE.MV3.SAME_PAD = False
-
-# Type of normalization
-# E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.BACKBONE.MV3.NORM = 'BN'
-
-# ---------------------------------------------------------------------------- #
 # ResNet options
 # ---------------------------------------------------------------------------- #
 _C.BACKBONE.RESNET = CN()
@@ -524,49 +439,6 @@ _C.BACKBONE.RESNET.STAGE_WITH_CTX = ("", "", "", "")
 # Network output stride, 32:c5, 16:c4, 8:c3
 _C.BACKBONE.RESNET.STRIDE = 32
 
-# ---------------------------------------------------------------------------- #
-# ResNeXt options
-# ---------------------------------------------------------------------------- #
-_C.BACKBONE.RESNEXT = CN()
-
-# The number of layers in each block
-# (3, 4, 6, 3) for resnext50
-# (3, 4, 23, 3) for resnext101
-# (3, 8, 36, 3) for resnext152
-_C.BACKBONE.RESNEXT.LAYERS = (3, 4, 6, 3)
-
-# Cardinality (groups) of convolution layers
-_C.BACKBONE.RESNEXT.C = 32
-
-# Network initial width of each (conv) group
-_C.BACKBONE.RESNEXT.WIDTH = 4
-
-# Use a aligned module in each block
-_C.BACKBONE.RESNEXT.USE_ALIGN = False
-
-# Use weight standardization
-_C.BACKBONE.RESNEXT.USE_WS = False
-
-# Use a three (3 * 3) kernels head; False for (7 * 7) kernels head.
-# True for resnext-c
-_C.BACKBONE.RESNEXT.USE_3x3x3HEAD = False
-
-# Use a (2 * 2) kernels avg_pooling layer in downsampling block.
-# True for resnext-d
-_C.BACKBONE.RESNEXT.AVG_DOWN = False
-
-# Type of 3x3 convolution layer in each block
-# E.g., 'Conv2d', 'Conv2dWS', 'DeformConv', 'MDeformConv', ...
-_C.BACKBONE.RESNEXT.STAGE_WITH_CONV = ('Conv2d', 'Conv2d', 'Conv2d', 'Conv2d')
-
-# Type of normalization
-# E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.BACKBONE.RESNEXT.NORM = 'BN'
-
-# Type of context module in each block
-# E.g., 'SE', 'GCB', ...
-_C.BACKBONE.RESNEXT.STAGE_WITH_CTX = ("", "", "", "")
-
 
 # ---------------------------------------------------------------------------- #
 # FPN options
@@ -611,9 +483,6 @@ _C.FPN.PANOPTIC.CONV_DIM = 256
 # Use FPN module before the panoptic head
 _C.FPN.PANOPTIC.USE_FPN = True
 
-# Use latent encode in panoptic head
-_C.FPN.PANOPTIC.USE_LATENC = False
-
 # Type of normalization in the NASFPN layers
 # E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
 _C.FPN.PANOPTIC.NORM = ""
@@ -641,18 +510,6 @@ _C.FPN.DECONVX.NUM_DECONVS = 3
 
 # Use bias in ConvTranspose layer
 _C.FPN.DECONVX.WITH_BIAS = False
-
-# ---------------------------------------------------------------------------- #
-# FPN latent encode options
-# ---------------------------------------------------------------------------- #
-_C.FPN.LATENC = CN()
-
-# latent encode conv dim out
-_C.FPN.LATENC.CONV_DIM = 256
-
-# Type of normalization in the NASFPN layers
-# E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.FPN.LATENC.NORM = ""
 
 
 # ---------------------------------------------------------------------------- #
@@ -918,55 +775,6 @@ _C.PARSING.PARSINGIOU.NORM = ""
 
 # Loss weight for Parsing IoU head
 _C.PARSING.PARSINGIOU.LOSS_WEIGHT = 1.0
-
-# ---------------------------------------------------------------------------- #
-# Quality options
-# ---------------------------------------------------------------------------- #
-_C.PARSING.QUALITY = CN()
-
-# The head of Quality to use
-# (e.g., "convx_head")
-_C.PARSING.QUALITY.QUALITY_HEAD = "quality_head"
-
-# Output module of Quality head
-_C.PARSING.QUALITY.QUALITY_OUTPUT = "quality_output"
-
-# Number of share Conv layers in the Quality head
-_C.PARSING.QUALITY.NUM_SHARE_CONVS = 2
-
-# Number of parsing Conv layers in the Quality head
-_C.PARSING.QUALITY.NUM_PARSING_CONVS = 1
-
-# Number of mask Conv layers in the Quality head
-_C.PARSING.QUALITY.NUM_IOU_CONVS = 2
-
-# Hidden Conv layer dimension of Quality head
-_C.PARSING.QUALITY.PARSING_CONV_DIM = 128
-
-# Hidden MLP layer dimension of Quality head
-_C.PARSING.QUALITY.IOU_CONV_DIM = 512
-
-# Type of normalization in the Quality head
-# E.g., 'FrozenBN', 'BN', 'SyncBN', 'GN', 'MixBN', 'MixGN', ...
-_C.PARSING.QUALITY.NORM = ""
-
-# Middle conv dim in quality module
-_C.PARSING.QUALITY.QUALITY_DIM = 256
-
-# Whether or not use input dim as quality module output feature dim
-_C.PARSING.QUALITY.KEEP_DIM = False
-
-# If KEEP_DIM = False use OUTPUT_DIM as quality module output feature dim, else use input dim as output feature dim
-_C.PARSING.QUALITY.OUTPUT_DIM = 512
-
-# Parsing loss weight for Quality head
-_C.PARSING.QUALITY.PARSING_LOSS_WEIGHT = 0.5
-
-# Lovasz loss for Quality head
-_C.PARSING.QUALITY.LOVASZ_LOSS_WEIGHT = 0.0
-
-# IoU loss weight for Quality head
-_C.PARSING.QUALITY.IOU_LOSS_WEIGHT = 0.5
 
 
 # ---------------------------------------------------------------------------- #

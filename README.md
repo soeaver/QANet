@@ -1,5 +1,5 @@
 # News
-- Pytorch official code of QANet is released. (01/11/2020)
+- Pytorch official code of QANet is released. (03/11/2021)
 
 
 # Introduction
@@ -19,8 +19,8 @@ If you use QANet, please use the following BibTeX entry.
 @inproceedings{yang2020qanet,
   title = {Quality-Aware Network for Human Parsing},
   author = {Lu Yang and Qing Song and Zhihui Wang and Zhiwei Liu and Songcen Xu and Zhihao Li},
-  booktitle = {arXiv preprint arXiv:20xx.xxxxx},
-  year = {2020}
+  booktitle = {arXiv preprint arXiv:2103.05997},
+  year = {2021}
 }
 
 ```

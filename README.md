@@ -16,7 +16,7 @@ In this repository, we release the QANet code in Pytorch.
 If you use QANet, please use the following BibTeX entry.
 
 ```BibTeX
-@inproceedings{yang2020qanet,
+@inproceedings{yang2021qanet,
   title = {Quality-Aware Network for Human Parsing},
   author = {Lu Yang and Qing Song and Zhihui Wang and Zhiwei Liu and Songcen Xu and Zhihao Li},
   booktitle = {arXiv preprint arXiv:2103.05997},

@@ -7,7 +7,8 @@ This document covers how to prepare training and evaluating data for QANet, incl
 # Data Structure
 
   We strongly recommend downloading the data format we prepared.
-  
+
+  - [PASCAL-Person-Part](https://drive.google.com/file/d/1XQsTBz7Rwp38qsIYtU9X0LlrQN84eODX/view?usp=sharing)
   - [CIHP](https://drive.google.com/file/d/1k-cUS2WyK9eAasYcheCTmqSgLSaEO4U4/view?usp=sharing)
   - [LIP](https://drive.google.com/file/d/15buYPS1syjkn1r9NWMA5YfKn4VtpL6hT/view?usp=sharing)
   
@@ -17,6 +18,26 @@ This document covers how to prepare training and evaluating data for QANet, incl
   ├─cfgs
   ├─ckpts
   ├─data
+  │  ├─PASCAL-Person-Part
+  │  │  ├─Training
+  │  │  │  ├─Categories
+  │  │  │  ├─Category_ids
+  │  │  │  ├─Human_ids
+  │  │  │  ├─Humans
+  │  │  │  ├─Images
+  │  │  │  ├─Instance_ids
+  │  │  │  ├─Instances
+  │  │  ├─Testing
+  │  │  │  ├─Categories
+  │  │  │  ├─Category_ids
+  │  │  │  ├─Human_ids
+  │  │  │  ├─Humans
+  │  │  │  ├─Images
+  │  │  │  ├─Instance_ids
+  │  │  │  ├─Instances
+  │  │  ├─annotations
+  │  │  │  ├─PASCAL-Person-Part_train.json
+  │  │  │  ├─PASCAL-Person-Part_test.json
   │  ├─CIHP
   │  │  ├─Training
   │  │  │  ├─Categories
